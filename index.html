@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>旅行清单</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 100px;
+      background: #eef6ff;
+      font-family: Arial, sans-serif;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #2c5c8a;
+      margin-bottom: 20px;
+      display: inline-block;
+      max-width: 100%;
+      cursor: pointer;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .title:hover {
+      color: #2563eb;
+    }
+
+    .members-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #3b82f6;
+      display: inline-block;
+      max-width: 100%;
+      cursor: pointer;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .members-title:hover {
+      color: #2563eb;
+    }
+
+    .member-list {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+      gap: 14px;
+      overflow-x: auto;
+      padding: 2px 0 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .member-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    .member-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      padding: 2px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+
+    .member-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.12);
+      flex-shrink: 0;
+    }
+
+    .member-chip-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2c5c8a;
+      max-width: 56px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .member-add-chip {
+      justify-content: flex-start;
+    }
+
+    .member-add-chip .member-avatar {
+      background: #f8fbff;
+      color: #60a5fa;
+      border: 1px dashed #93c5fd;
+      box-shadow: none;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .member-add-chip .member-chip-name {
+      display: none;
+    }
+
+    .member-empty {
+      font-size: 14px;
+      color: #64748b;
+      padding: 8px 4px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .category {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #3b82f6;
+    }
+
+    .checklist-category-card .category-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .checklist-category-card .category-card-header .category-name {
+      margin-bottom: 0;
+    }
+
+    .category-header-start {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+
+    .category-collapse-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1;
+      color: #3b82f6;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .category-collapse-btn:hover {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .category-name {
+      flex: 0 1 auto;
+      min-width: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .category-name:hover {
+      color: #2563eb;
+    }
+
+    .checklist-category-card.category-sortable-ghost {
+      opacity: 0.45;
+    }
+
+    .checklist-category-card.category-sortable-chosen {
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.14);
+    }
+
+    .checklist-category-card.category-sortable-drag {
+      opacity: 0.96;
+    }
+
+    .category-add {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: #e5efff;
+      color: #60a5fa;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .category-add:hover {
+      background: #dbeafe;
+    }
+
+    .checklist-category-card.collapsed .item {
+      display: none;
+    }
+
+    .category-delete {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: #fee2e2;
+      color: #f87171;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .category-delete:hover {
+      background: #fecaca;
+      color: #ef4444;
+    }
+
+    .category-delete:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .category-delete:disabled:hover {
+      background: #fee2e2;
+      color: #f87171;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .item-name {
+      margin-left: 10px;
+      font-size: 18px;
+      color: #ef4444;
+      transition: 0.3s;
+      display: inline-block;
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 45%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .item.completed .item-name {
+      color: #3b82f6;
+    }
+
+    .item-name:hover {
+      text-decoration: underline;
+    }
+
+    .avatars {
+      margin-left: auto;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #93c5fd;
+      margin-left: -8px;
+      border: 2px solid white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .avatars > .avatar:first-child {
+      margin-left: 0;
+    }
+
+    .avatar-more {
+      background: #e5efff;
+      color: #3b82f6;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .avatars .avatar:not(.avatar-more) {
+      cursor: pointer;
+    }
+
+    .item-delete {
+      width: 28px;
+      height: 28px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 50%;
+      background: #fee2e2;
+      color: #f87171;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .item-delete:hover {
+      background: #fecaca;
+      color: #ef4444;
+    }
+
+    .add-button {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: #60a5fa;
+      color: white;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .invite-hint-intro {
+      margin: 0 0 10px;
+      color: #64748b;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .invite-hint-list {
+      margin: 0 0 18px;
+      padding-left: 20px;
+      color: #2c5c8a;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .invite-hint-list li {
+      margin-bottom: 4px;
+    }
+
+    .invite-modal-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .invite-modal-actions .modal-btn {
+      min-width: 120px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 92, 138, 0.25);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    #addCategoryModal {
+      z-index: 101;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.2);
+    }
+
+    .modal h3 {
+      margin: 0 0 14px;
+      color: #2c5c8a;
+      font-size: 20px;
+    }
+
+    .modal label {
+      display: block;
+      margin-bottom: 6px;
+      color: #3b82f6;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .modal input,
+    .modal select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      background: #f8fbff;
+      color: #2c5c8a;
+      outline: none;
+    }
+
+    .modal input:focus,
+    .modal select:focus {
+      border-color: #60a5fa;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .owner-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .owner-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f3f8ff;
+      border: 1px solid #dbeafe;
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: #2c5c8a;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .owner-chip input {
+      margin: 0;
+      width: 14px;
+      height: 14px;
+      accent-color: #60a5fa;
+    }
+
+    .owner-chip-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: bold;
+      border: 2px solid white;
+      flex-shrink: 0;
+    }
+
+    .owner-chip-all .owner-chip-avatar {
+      background: #dbeafe;
+      font-size: 12px;
+      font-weight: normal;
+      line-height: 1;
+    }
+
+    .modal-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-btn.cancel {
+      background: #e5efff;
+      color: #3b82f6;
+    }
+
+    .modal-btn.confirm {
+      background: #60a5fa;
+      color: #ffffff;
+    }
+
+    .modal-btn.danger {
+      background: #fca5a5;
+      color: #ffffff;
+    }
+
+    .modal-btn.danger:hover {
+      background: #f87171;
+    }
+
+    .confirm-delete-message {
+      margin: 0 0 16px;
+      color: #64748b;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    #confirmDeleteModal {
+      z-index: 102;
+    }
+
+    .add-category-footer {
+      margin-bottom: 20px;
+      padding: 0 2px;
+    }
+
+    .add-category-btn {
+      width: 100%;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: transparent;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .add-category-btn:hover {
+      background: #f8fbff;
+      border-color: #93c5fd;
+      color: #3b82f6;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="title" id="tripTitle" role="button" tabindex="0" title="点击编辑旅行名称">克罗地亚之旅</div>
+
+  <div class="card">
+    <div class="members-title" id="membersSectionTitle" role="button" tabindex="0" title="点击编辑">我们</div>
+    <div class="member-list" id="memberList"></div>
+  </div>
+
+  <div id="categoriesContainer"></div>
+
+  <div class="add-category-footer">
+    <button type="button" class="add-category-btn" id="addCategoryOpenBtn">＋ 添加分类</button>
+  </div>
+
+  <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
+
+  <div class="modal-overlay" id="inviteJoinModal">
+    <div class="modal">
+      <h3>邀请功能开发中 ✈️</h3>
+      <p class="invite-hint-intro">未来可以：</p>
+      <ul class="invite-hint-list">
+        <li>分享给朋友</li>
+        <li>微信加入旅行</li>
+        <li>一起准备行李</li>
+      </ul>
+      <div class="modal-actions invite-modal-actions">
+        <button type="button" class="modal-btn confirm" id="closeInviteJoinBtn">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addCategoryModal">
+    <div class="modal">
+      <h3>添加分类</h3>
+      <label for="newCategoryNameInput">分类名称</label>
+      <input id="newCategoryNameInput" type="text" placeholder="例如：电子设备" maxlength="24" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelCategoryBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="confirmCategoryBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addItemModal">
+    <div class="modal">
+      <h3>添加新物品</h3>
+
+      <label for="itemNameInput">物品名称</label>
+      <input id="itemNameInput" type="text" placeholder="例如：泳衣" />
+
+      <div id="categorySelectGroup">
+        <label for="categorySelect">分类</label>
+        <select id="categorySelect"></select>
+      </div>
+
+      <label>负责人（可多选）</label>
+      <div class="owner-options" id="ownerOptions"></div>
+
+      <div class="modal-actions">
+        <button class="modal-btn cancel" id="cancelAddBtn">取消</button>
+        <button class="modal-btn confirm" id="confirmAddBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editOwnersModal">
+    <div class="modal">
+      <h3>编辑物品</h3>
+      <label for="editItemNameInput">物品名称</label>
+      <input id="editItemNameInput" type="text" placeholder="输入物品名称" />
+
+      <label id="editOwnersItemLabel">负责人（可多选）</label>
+      <div class="owner-options" id="editOwnerOptions"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditOwnersBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditOwnersBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editTripTitleModal">
+    <div class="modal">
+      <h3>编辑旅行名称</h3>
+      <label for="editTripTitleInput">旅行名称</label>
+      <input id="editTripTitleInput" type="text" placeholder="例如：日本旅行" maxlength="32" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditTripTitleBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditTripTitleBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editCategoryModal">
+    <div class="modal">
+      <h3>编辑分类</h3>
+      <label for="editCategoryNameInput">分类名称</label>
+      <input id="editCategoryNameInput" type="text" placeholder="输入分类名称" maxlength="24" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditCategoryBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditCategoryBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editMembersSectionTitleModal">
+    <div class="modal">
+      <h3>编辑标题</h3>
+      <label for="editMembersSectionTitleInput">标题</label>
+      <input id="editMembersSectionTitleInput" type="text" placeholder="例如：东京暴走团" maxlength="24" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditMembersSectionTitleBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditMembersSectionTitleBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editMemberModal">
+    <div class="modal">
+      <h3>编辑成员</h3>
+      <label for="editMemberNameInput">成员名称</label>
+      <input id="editMemberNameInput" type="text" placeholder="输入成员名称" maxlength="20" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditMemberBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditMemberBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addMemberModal">
+    <div class="modal">
+      <h3>添加成员</h3>
+      <label for="addMemberNameInput">成员名称</label>
+      <input id="addMemberNameInput" type="text" placeholder="输入成员名称" maxlength="20" />
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelAddMemberBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveAddMemberBtn">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmDeleteModal">
+    <div class="modal">
+      <h3 id="confirmDeleteTitle">确认删除？</h3>
+      <p class="confirm-delete-message" id="confirmDeleteMessage">删除后无法恢复</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelDeleteBtn">取消</button>
+        <button type="button" class="modal-btn danger" id="confirmDeleteBtn">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script>
+    const addButton = document.getElementById('inviteJoinBtn');
+    const inviteJoinModal = document.getElementById('inviteJoinModal');
+    const closeInviteJoinBtn = document.getElementById('closeInviteJoinBtn');
+    const tripTitleEl = document.getElementById('tripTitle');
+    const editTripTitleModal = document.getElementById('editTripTitleModal');
+    const editTripTitleInput = document.getElementById('editTripTitleInput');
+    const cancelEditTripTitleBtn = document.getElementById('cancelEditTripTitleBtn');
+    const saveEditTripTitleBtn = document.getElementById('saveEditTripTitleBtn');
+    const membersSectionTitleEl = document.getElementById('membersSectionTitle');
+    const editMembersSectionTitleModal = document.getElementById('editMembersSectionTitleModal');
+    const editMembersSectionTitleInput = document.getElementById('editMembersSectionTitleInput');
+    const cancelEditMembersSectionTitleBtn = document.getElementById('cancelEditMembersSectionTitleBtn');
+    const saveEditMembersSectionTitleBtn = document.getElementById('saveEditMembersSectionTitleBtn');
+    const editCategoryModal = document.getElementById('editCategoryModal');
+    const editCategoryNameInput = document.getElementById('editCategoryNameInput');
+    const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
+    const saveEditCategoryBtn = document.getElementById('saveEditCategoryBtn');
+    const modal = document.getElementById('addItemModal');
+    const itemNameInput = document.getElementById('itemNameInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const categorySelectGroup = document.getElementById('categorySelectGroup');
+    const ownerOptions = document.getElementById('ownerOptions');
+    const cancelAddBtn = document.getElementById('cancelAddBtn');
+    const confirmAddBtn = document.getElementById('confirmAddBtn');
+    const editOwnersModal = document.getElementById('editOwnersModal');
+    const editItemNameInput = document.getElementById('editItemNameInput');
+    const editOwnerOptions = document.getElementById('editOwnerOptions');
+    const editOwnersItemLabel = document.getElementById('editOwnersItemLabel');
+    const cancelEditOwnersBtn = document.getElementById('cancelEditOwnersBtn');
+    const saveEditOwnersBtn = document.getElementById('saveEditOwnersBtn');
+    const editMemberModal = document.getElementById('editMemberModal');
+    const editMemberNameInput = document.getElementById('editMemberNameInput');
+    const cancelEditMemberBtn = document.getElementById('cancelEditMemberBtn');
+    const saveEditMemberBtn = document.getElementById('saveEditMemberBtn');
+    const addMemberModal = document.getElementById('addMemberModal');
+    const addMemberNameInput = document.getElementById('addMemberNameInput');
+    const cancelAddMemberBtn = document.getElementById('cancelAddMemberBtn');
+    const saveAddMemberBtn = document.getElementById('saveAddMemberBtn');
+    const memberList = document.getElementById('memberList');
+    const categoriesContainer = document.getElementById('categoriesContainer');
+    const categoryModal = document.getElementById('addCategoryModal');
+    const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+    const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+    const confirmCategoryBtn = document.getElementById('confirmCategoryBtn');
+    const addCategoryOpenBtn = document.getElementById('addCategoryOpenBtn');
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    const confirmDeleteTitle = document.getElementById('confirmDeleteTitle');
+    const confirmDeleteMessage = document.getElementById('confirmDeleteMessage');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    const STORAGE_KEY = 'travel-checklist-items-v1';
+    const MEMBERS_STORAGE_KEY = 'travel-checklist-members-v1';
+    const CATEGORIES_STORAGE_KEY = 'travel-checklist-categories-v1';
+    const CATEGORY_COLLAPSE_STORAGE_KEY = 'travel-checklist-category-collapse-v1';
+    const TRIP_TITLE_STORAGE_KEY = 'travel-checklist-trip-title-v1';
+    const DEFAULT_TRIP_TITLE = '克罗地亚之旅';
+    const MEMBERS_SECTION_TITLE_STORAGE_KEY = 'travel-checklist-members-section-title-v1';
+    const DEFAULT_MEMBERS_SECTION_TITLE = '我们';
+
+    const DEFAULT_CATEGORY_ORDER = ['海边装备', '药品', '衣物'];
+    const CATEGORY_ICONS = {
+      '海边装备': '🌊',
+      '药品': '💊',
+      '衣物': '👕'
+    };
+
+    const CATEGORY_ICON_KEYWORD_RULES = [
+      { keys: ['海边', '浮潜', '沙滩', '潜水', '游泳'], icon: '🌊' },
+      { keys: ['药品', '医疗', '药', '急救'], icon: '💊' },
+      { keys: ['衣物', '穿搭', '服装', '衣服', '鞋'], icon: '👕' },
+      { keys: ['电子', '设备', '数码', '充电', '插头'], icon: '🔌' },
+      { keys: ['工具', '五金'], icon: '🧰' },
+      { keys: ['证件', '护照', '签证', '身份'], icon: '🪪' },
+      { keys: ['宝宝', '婴儿', '儿童', '小孩'], icon: '🧸' },
+      { keys: ['食物', '食品', '零食', '餐饮'], icon: '🍜' },
+      { keys: ['洗漱', '卫浴', '护理', '牙刷'], icon: '🪥' },
+      { keys: ['露营', '帐篷', '户外'], icon: '⛺' }
+    ];
+
+    function iconForCategoryName(name) {
+      const s = String(name || '').trim();
+      if (!s) return '📦';
+      if (CATEGORY_ICONS[s]) return CATEGORY_ICONS[s];
+      for (let i = 0; i < CATEGORY_ICON_KEYWORD_RULES.length; i++) {
+        const rule = CATEGORY_ICON_KEYWORD_RULES[i];
+        for (let j = 0; j < rule.keys.length; j++) {
+          if (s.includes(rule.keys[j])) return rule.icon;
+        }
+      }
+      return '📦';
+    }
+
+    const AVATAR_PALETTE = [
+      '#3b82f6', '#2563eb', '#0ea5e9', '#06b6d4',
+      '#8b5cf6', '#a855f7', '#ec4899', '#f43f5e',
+      '#10b981', '#14b8a6', '#f59e0b', '#eab308'
+    ];
+
+    let checklistItems = [];
+    let members = [];
+    let categories = [];
+    let tripTitle = DEFAULT_TRIP_TITLE;
+    let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
+    let collapsedCategories = {};
+    let editingItemId = null;
+    let editingMemberId = null;
+    let editingCategoryOldName = null;
+    let addItemTargetCategory = null;
+    let pendingDeleteAction = null;
+    let suppressCategoryToggleClick = false;
+    let categorySortable = null;
+    let memberPressTimer = null;
+    let memberLongPressTriggered = false;
+    let memberPressStart = null;
+    const MEMBER_LONG_PRESS_MS = 500;
+    const DELETE_COPY = {
+      default: { title: '确认删除？', message: '删除后无法恢复' },
+      member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' }
+    };
+    const categoryCards = {};
+
+    function createId() {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+      return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function categoryHeading(key) {
+      return `${iconForCategoryName(key)} ${key}`;
+    }
+
+    function colorForName(name) {
+      let h = 0;
+      const s = String(name);
+      for (let i = 0; i < s.length; i++) {
+        h = s.charCodeAt(i) + ((h << 5) - h);
+      }
+      return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+    }
+
+    function saveChecklistItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(checklistItems));
+    }
+
+    function saveMembers() {
+      localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    }
+
+    function saveTripTitle() {
+      localStorage.setItem(TRIP_TITLE_STORAGE_KEY, tripTitle);
+    }
+
+    function loadTripTitle() {
+      try {
+        const raw = localStorage.getItem(TRIP_TITLE_STORAGE_KEY);
+        if (raw) {
+          const name = String(raw).trim();
+          if (name) {
+            tripTitle = name;
+            return;
+          }
+        }
+      } catch (e) {
+        tripTitle = DEFAULT_TRIP_TITLE;
+      }
+      tripTitle = DEFAULT_TRIP_TITLE;
+      saveTripTitle();
+    }
+
+    function renderTripTitle() {
+      tripTitleEl.textContent = tripTitle;
+      document.title = tripTitle;
+    }
+
+    function openEditTripTitleModal() {
+      editTripTitleInput.value = tripTitle;
+      editTripTitleModal.classList.add('show');
+      editTripTitleInput.focus();
+      editTripTitleInput.select();
+    }
+
+    function closeEditTripTitleModal() {
+      editTripTitleModal.classList.remove('show');
+    }
+
+    function saveEditedTripTitle() {
+      const nextTitle = editTripTitleInput.value.trim();
+      if (!nextTitle) {
+        editTripTitleInput.focus();
+        return;
+      }
+      if (nextTitle !== tripTitle) {
+        tripTitle = nextTitle;
+        saveTripTitle();
+        renderTripTitle();
+      }
+      closeEditTripTitleModal();
+    }
+
+    function saveMembersSectionTitle() {
+      localStorage.setItem(MEMBERS_SECTION_TITLE_STORAGE_KEY, membersSectionTitle);
+    }
+
+    function loadMembersSectionTitle() {
+      try {
+        const raw = localStorage.getItem(MEMBERS_SECTION_TITLE_STORAGE_KEY);
+        if (raw) {
+          const name = String(raw).trim();
+          if (name) {
+            membersSectionTitle = name;
+            return;
+          }
+        }
+      } catch (e) {
+        membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
+      }
+      membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
+      saveMembersSectionTitle();
+    }
+
+    function renderMembersSectionTitle() {
+      membersSectionTitleEl.textContent = membersSectionTitle;
+    }
+
+    function openEditMembersSectionTitleModal() {
+      editMembersSectionTitleInput.value = membersSectionTitle;
+      editMembersSectionTitleModal.classList.add('show');
+      editMembersSectionTitleInput.focus();
+      editMembersSectionTitleInput.select();
+    }
+
+    function closeEditMembersSectionTitleModal() {
+      editMembersSectionTitleModal.classList.remove('show');
+    }
+
+    function saveEditedMembersSectionTitle() {
+      const nextTitle = editMembersSectionTitleInput.value.trim();
+      if (!nextTitle) {
+        editMembersSectionTitleInput.focus();
+        return;
+      }
+      if (nextTitle !== membersSectionTitle) {
+        membersSectionTitle = nextTitle;
+        saveMembersSectionTitle();
+        renderMembersSectionTitle();
+      }
+      closeEditMembersSectionTitleModal();
+    }
+
+    function openEditCategoryModal(oldName) {
+      if (!categories.includes(oldName)) return;
+      editingCategoryOldName = oldName;
+      editCategoryNameInput.value = oldName;
+      editCategoryModal.classList.add('show');
+      editCategoryNameInput.focus();
+      editCategoryNameInput.select();
+    }
+
+    function closeEditCategoryModal() {
+      editCategoryModal.classList.remove('show');
+      editingCategoryOldName = null;
+    }
+
+    function saveEditedCategory() {
+      if (!editingCategoryOldName) return;
+      const oldName = editingCategoryOldName;
+      const nextName = editCategoryNameInput.value.trim();
+      if (!nextName) {
+        editCategoryNameInput.focus();
+        return;
+      }
+      if (nextName !== oldName && categories.includes(nextName)) {
+        editCategoryNameInput.select();
+        return;
+      }
+      if (nextName === oldName) {
+        closeEditCategoryModal();
+        return;
+      }
+      const idx = categories.indexOf(oldName);
+      if (idx === -1) return;
+
+      categories[idx] = nextName;
+      checklistItems.forEach(item => {
+        if (item.category === oldName) item.category = nextName;
+      });
+
+      if (collapsedCategories[oldName]) {
+        collapsedCategories[nextName] = true;
+      }
+      delete collapsedCategories[oldName];
+
+      if (addItemTargetCategory === oldName) {
+        addItemTargetCategory = nextName;
+      }
+
+      saveCategories();
+      saveChecklistItems();
+      saveCategoryCollapseState();
+
+      const prevSelect = categorySelect.value === oldName ? nextName : categorySelect.value;
+      renderCategoryCards();
+      syncCategorySelect(prevSelect);
+      renderChecklistItems();
+      closeEditCategoryModal();
+    }
+
+    function saveCategories() {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    }
+
+    function saveCategoryCollapseState() {
+      localStorage.setItem(CATEGORY_COLLAPSE_STORAGE_KEY, JSON.stringify(collapsedCategories));
+    }
+
+    function loadCategoryCollapseState() {
+      try {
+        const raw = localStorage.getItem(CATEGORY_COLLAPSE_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        collapsedCategories = {};
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          Object.keys(parsed).forEach(cat => {
+            if (parsed[cat]) collapsedCategories[cat] = true;
+          });
+        }
+      } catch (e) {
+        collapsedCategories = {};
+      }
+    }
+
+    function categoryCollapseArrow(cat) {
+      return collapsedCategories[cat] ? '▶' : '▼';
+    }
+
+    function applyCategoryCollapseState(card, cat) {
+      const collapsed = !!collapsedCategories[cat];
+      card.classList.toggle('collapsed', collapsed);
+      const btn = card.querySelector('.category-collapse-btn');
+      const label = card.querySelector('.category-name');
+      if (btn) {
+        btn.textContent = categoryCollapseArrow(cat);
+        btn.setAttribute('aria-expanded', String(!collapsed));
+      }
+      if (label) {
+        label.textContent = categoryHeading(cat);
+      }
+    }
+
+    function openConfirmDelete(onConfirm, copyKey = 'default') {
+      const copy = DELETE_COPY[copyKey] || DELETE_COPY.default;
+      confirmDeleteTitle.textContent = copy.title;
+      confirmDeleteMessage.textContent = copy.message;
+      pendingDeleteAction = onConfirm;
+      confirmDeleteModal.classList.add('show');
+    }
+
+    function openConfirmDeleteMember(memberId) {
+      openConfirmDelete(() => removeMemberById(memberId), 'member');
+    }
+
+    function clearMemberPressTimer() {
+      if (memberPressTimer) {
+        clearTimeout(memberPressTimer);
+        memberPressTimer = null;
+      }
+    }
+
+    function closeConfirmDelete() {
+      pendingDeleteAction = null;
+      confirmDeleteModal.classList.remove('show');
+    }
+
+    function executeConfirmDelete() {
+      if (typeof pendingDeleteAction === 'function') {
+        pendingDeleteAction();
+      }
+      closeConfirmDelete();
+    }
+
+    function removeItemById(itemId) {
+      checklistItems = checklistItems.filter(entry => entry.id !== itemId);
+      saveChecklistItems();
+      renderChecklistItems();
+    }
+
+    function loadCategories() {
+      try {
+        const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) {
+            categories = [...new Set(parsed.map(s => String(s).trim()).filter(Boolean))];
+            return;
+          }
+        }
+      } catch (e) {
+        categories = [];
+      }
+      categories = [...DEFAULT_CATEGORY_ORDER];
+      saveCategories();
+    }
+
+    function renderCategoryCards() {
+      categoriesContainer.innerHTML = '';
+      Object.keys(categoryCards).forEach(k => {
+        delete categoryCards[k];
+      });
+      categories.forEach(cat => {
+        const card = document.createElement('div');
+        card.className = 'card checklist-category-card';
+        card.dataset.categoryName = cat;
+
+        const header = document.createElement('div');
+        header.className = 'category-card-header';
+        const collapseBtn = document.createElement('button');
+        collapseBtn.type = 'button';
+        collapseBtn.className = 'category-collapse-btn';
+        collapseBtn.dataset.categoryName = cat;
+        collapseBtn.setAttribute('role', 'button');
+        collapseBtn.setAttribute('tabindex', '0');
+        collapseBtn.setAttribute('aria-label', '展开或收起分类');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'category category-name';
+        nameSpan.dataset.categoryName = cat;
+        nameSpan.setAttribute('title', '点击编辑分类名称');
+        const addItemBtn = document.createElement('button');
+        addItemBtn.type = 'button';
+        addItemBtn.className = 'category-add';
+        addItemBtn.dataset.categoryName = cat;
+        addItemBtn.setAttribute('aria-label', `添加物品到${cat}`);
+        addItemBtn.textContent = '＋';
+        const headerStart = document.createElement('div');
+        headerStart.className = 'category-header-start';
+        headerStart.appendChild(collapseBtn);
+        headerStart.appendChild(nameSpan);
+        headerStart.appendChild(addItemBtn);
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'category-delete';
+        delBtn.dataset.categoryName = cat;
+        delBtn.setAttribute('aria-label', '删除分类');
+        delBtn.textContent = '×';
+        delBtn.disabled = categories.length <= 1;
+        header.appendChild(headerStart);
+        header.appendChild(delBtn);
+        card.appendChild(header);
+        applyCategoryCollapseState(card, cat);
+
+        categoriesContainer.appendChild(card);
+        categoryCards[cat] = card;
+      });
+      initCategorySortable();
+    }
+
+    function persistCategoryOrderFromDom() {
+      const newOrder = [...categoriesContainer.querySelectorAll('.checklist-category-card')]
+        .map(card => card.dataset.categoryName)
+        .filter(Boolean);
+      if (!newOrder.length || newOrder.length !== categories.length) return;
+      const unchanged = newOrder.every((name, index) => name === categories[index]);
+      if (unchanged) return;
+      categories = newOrder;
+      saveCategories();
+      syncCategorySelect(categorySelect.value);
+    }
+
+    function initCategorySortable() {
+      if (typeof Sortable === 'undefined') return;
+      if (categorySortable) {
+        categorySortable.destroy();
+        categorySortable = null;
+      }
+      if (categories.length < 2) return;
+
+      categorySortable = Sortable.create(categoriesContainer, {
+        animation: 150,
+        draggable: '.checklist-category-card',
+        handle: '.category-header-start',
+        delay: 450,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 6,
+        forceFallback: true,
+        fallbackTolerance: 4,
+        ghostClass: 'category-sortable-ghost',
+        chosenClass: 'category-sortable-chosen',
+        dragClass: 'category-sortable-drag',
+        filter: '.category-add, .category-delete, .category-collapse-btn',
+        preventOnFilter: true,
+        onStart() {
+          suppressCategoryToggleClick = false;
+        },
+        onEnd(evt) {
+          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
+            suppressCategoryToggleClick = true;
+            persistCategoryOrderFromDom();
+          }
+          window.setTimeout(() => {
+            suppressCategoryToggleClick = false;
+          }, 320);
+        }
+      });
+    }
+
+    function removeCategoryByName(catName) {
+      if (categories.length <= 1) return;
+      if (!categories.includes(catName)) return;
+      categories = categories.filter(c => c !== catName);
+      checklistItems = checklistItems.filter(item => item.category !== catName);
+      delete collapsedCategories[catName];
+      saveCategories();
+      saveChecklistItems();
+      saveCategoryCollapseState();
+      const prevSelect = categorySelect.value === catName ? (categories[0] || '') : categorySelect.value;
+      renderCategoryCards();
+      syncCategorySelect(prevSelect);
+      renderChecklistItems();
+    }
+
+    function syncCategorySelect(preferred) {
+      const prev = preferred !== undefined && preferred !== null
+        ? preferred
+        : (categorySelect.value || categories[0] || '');
+      categorySelect.innerHTML = '';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        categorySelect.appendChild(opt);
+      });
+      if (categories.includes(prev)) {
+        categorySelect.value = prev;
+      } else if (categories.length) {
+        categorySelect.value = categories[0];
+      }
+    }
+
+    function mergeCategoriesFromItems() {
+      const set = new Set(categories);
+      let changed = false;
+      checklistItems.forEach(item => {
+        const c = item && item.category;
+        if (c && !set.has(c)) {
+          categories.push(c);
+          set.add(c);
+          changed = true;
+        }
+      });
+      if (changed) saveCategories();
+      return changed;
+    }
+
+    function getDefaultSeedItems() {
+      return [
+        { id: createId(), name: '防晒霜', category: '海边装备', owners: [], completedOwners: [], completed: false },
+        { id: createId(), name: '浮潜面罩', category: '海边装备', owners: [], completedOwners: [], completed: false },
+        { id: createId(), name: '晕船药', category: '药品', owners: [], completedOwners: [], completed: false }
+      ];
+    }
+
+    function loadMembers() {
+      try {
+        const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) {
+            members = parsed.map(m => ({
+              id: m.id || createId(),
+              name: String(m.name || '').trim()
+            })).filter(m => m.name);
+            if (members.length) {
+              saveMembers();
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        members = [];
+      }
+      members = ['我', '小李', '小王'].map(name => ({ id: createId(), name }));
+      saveMembers();
+    }
+
+    function renderMemberList() {
+      memberList.innerHTML = '';
+      members.forEach(m => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'member-chip';
+        chip.dataset.memberId = m.id;
+        chip.setAttribute('aria-label', `成员 ${m.name}`);
+        const av = document.createElement('div');
+        av.className = 'member-avatar';
+        av.style.background = colorForName(m.name);
+        av.textContent = m.name.charAt(0) || '?';
+        const nm = document.createElement('span');
+        nm.className = 'member-chip-name';
+        nm.textContent = m.name;
+        chip.appendChild(av);
+        chip.appendChild(nm);
+        memberList.appendChild(chip);
+      });
+      const addChip = document.createElement('button');
+      addChip.type = 'button';
+      addChip.className = 'member-chip member-add-chip';
+      addChip.setAttribute('aria-label', '添加成员');
+      const addAv = document.createElement('div');
+      addAv.className = 'member-avatar';
+      addAv.textContent = '＋';
+      addChip.appendChild(addAv);
+      memberList.appendChild(addChip);
+    }
+
+    function removeMemberById(memberId) {
+      const idx = members.findIndex(m => m.id === memberId);
+      if (idx === -1) return;
+      const removedName = members[idx].name;
+      members.splice(idx, 1);
+      checklistItems.forEach(item => {
+        if (!item.owners || !item.owners.length) return;
+        item.owners = item.owners.filter(o => o !== removedName);
+        if (item.completedOwners) {
+          item.completedOwners = item.completedOwners.filter(o => o !== removedName);
+        }
+        item.completed = isItemAllOwnersComplete(item);
+      });
+      saveMembers();
+      saveChecklistItems();
+      renderMemberList();
+      renderOwnerOptions();
+      renderChecklistItems();
+    }
+
+    function openEditMemberModal(memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+      editingMemberId = memberId;
+      editMemberNameInput.value = member.name;
+      editMemberModal.classList.add('show');
+      editMemberNameInput.focus();
+      editMemberNameInput.select();
+    }
+
+    function closeEditMemberModal() {
+      editMemberModal.classList.remove('show');
+      editingMemberId = null;
+    }
+
+    function saveEditedMember() {
+      if (!editingMemberId) return;
+      const member = members.find(m => m.id === editingMemberId);
+      if (!member) return;
+      const nextName = editMemberNameInput.value.trim();
+      if (!nextName) {
+        editMemberNameInput.focus();
+        return;
+      }
+      if (members.some(m => m.id !== editingMemberId && m.name === nextName)) {
+        editMemberNameInput.select();
+        return;
+      }
+      const oldName = member.name;
+      if (oldName !== nextName) {
+        member.name = nextName;
+        checklistItems.forEach(item => {
+          if (!item.owners || !item.owners.length) return;
+          item.owners = item.owners.map(o => (o === oldName ? nextName : o));
+          if (item.completedOwners) {
+            item.completedOwners = item.completedOwners.map(o => (o === oldName ? nextName : o));
+          }
+          item.completed = isItemAllOwnersComplete(item);
+        });
+        saveMembers();
+        saveChecklistItems();
+        renderMemberList();
+        renderOwnerOptions();
+        renderChecklistItems();
+      }
+      closeEditMemberModal();
+    }
+
+    function syncOwnerAllCheckboxState(container) {
+      const allCb = container.querySelector('.owner-all-checkbox');
+      if (!allCb) return;
+      const memberBoxes = container.querySelectorAll('input[name="owners"]');
+      if (!memberBoxes.length) {
+        allCb.checked = false;
+        return;
+      }
+      allCb.checked = [...memberBoxes].every(cb => cb.checked);
+    }
+
+    function renderOwnerCheckboxes(container, selectedOwners = [], selectFirstByDefault = false) {
+      container.innerHTML = '';
+      if (!members.length) {
+        const hint = document.createElement('div');
+        hint.className = 'member-empty';
+        hint.textContent = '请先添加成员';
+        container.appendChild(hint);
+        return;
+      }
+      const allLabel = document.createElement('label');
+      allLabel.className = 'owner-chip owner-chip-all';
+      const allInput = document.createElement('input');
+      allInput.type = 'checkbox';
+      allInput.className = 'owner-all-checkbox';
+      allInput.setAttribute('aria-label', '全部人');
+      const allMini = document.createElement('span');
+      allMini.className = 'owner-chip-avatar';
+      allMini.textContent = '👨‍👩‍👧';
+      const allNameSpan = document.createElement('span');
+      allNameSpan.textContent = '全部人';
+      allLabel.appendChild(allInput);
+      allLabel.appendChild(allMini);
+      allLabel.appendChild(allNameSpan);
+      container.appendChild(allLabel);
+
+      members.forEach((m, index) => {
+        const label = document.createElement('label');
+        label.className = 'owner-chip';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.name = 'owners';
+        input.value = m.name;
+        input.checked = selectedOwners.includes(m.name) || (selectFirstByDefault && selectedOwners.length === 0 && index === 0);
+        const mini = document.createElement('span');
+        mini.className = 'owner-chip-avatar';
+        mini.style.background = colorForName(m.name);
+        mini.textContent = m.name.charAt(0) || '?';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = m.name;
+        label.appendChild(input);
+        label.appendChild(mini);
+        label.appendChild(nameSpan);
+        container.appendChild(label);
+      });
+      syncOwnerAllCheckboxState(container);
+    }
+
+    function renderOwnerOptions() {
+      renderOwnerCheckboxes(ownerOptions, [], true);
+    }
+
+    function openAddMemberModal() {
+      addMemberModal.classList.add('show');
+      addMemberNameInput.value = '';
+      addMemberNameInput.focus();
+    }
+
+    function closeAddMemberModal() {
+      addMemberModal.classList.remove('show');
+    }
+
+    function addMember() {
+      const name = addMemberNameInput.value.trim();
+      if (!name) {
+        addMemberNameInput.focus();
+        return;
+      }
+      if (members.some(m => m.name === name)) {
+        addMemberNameInput.select();
+        return;
+      }
+      members.push({ id: createId(), name });
+      saveMembers();
+      renderMemberList();
+      renderOwnerOptions();
+      closeAddMemberModal();
+    }
+
+    cancelAddMemberBtn.addEventListener('click', closeAddMemberModal);
+    saveAddMemberBtn.addEventListener('click', addMember);
+    addMemberNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addMember();
+    });
+    addMemberModal.addEventListener('click', (event) => {
+      if (event.target === addMemberModal) closeAddMemberModal();
+    });
+
+    memberList.addEventListener('pointerdown', (event) => {
+      const chip = event.target.closest('.member-chip:not(.member-add-chip)');
+      if (!chip) return;
+      memberLongPressTriggered = false;
+      memberPressStart = { x: event.clientX, y: event.clientY };
+      const memberId = chip.dataset.memberId;
+      clearMemberPressTimer();
+      memberPressTimer = window.setTimeout(() => {
+        memberLongPressTriggered = true;
+        openConfirmDeleteMember(memberId);
+        clearMemberPressTimer();
+      }, MEMBER_LONG_PRESS_MS);
+    });
+
+    memberList.addEventListener('pointerup', () => {
+      clearMemberPressTimer();
+      memberPressStart = null;
+    });
+
+    memberList.addEventListener('pointercancel', () => {
+      clearMemberPressTimer();
+      memberPressStart = null;
+    });
+
+    memberList.addEventListener('pointermove', (event) => {
+      if (!memberPressTimer || !memberPressStart) return;
+      const dx = Math.abs(event.clientX - memberPressStart.x);
+      const dy = Math.abs(event.clientY - memberPressStart.y);
+      if (dx > 10 || dy > 10) {
+        clearMemberPressTimer();
+        memberPressStart = null;
+      }
+    });
+
+    memberList.addEventListener('click', (event) => {
+      const addChip = event.target.closest('.member-add-chip');
+      if (addChip) {
+        event.preventDefault();
+        openAddMemberModal();
+        return;
+      }
+      const chip = event.target.closest('.member-chip');
+      if (!chip) return;
+      if (memberLongPressTriggered) {
+        memberLongPressTriggered = false;
+        return;
+      }
+      openEditMemberModal(chip.dataset.memberId);
+    });
+
+    cancelEditMemberBtn.addEventListener('click', closeEditMemberModal);
+    saveEditMemberBtn.addEventListener('click', saveEditedMember);
+    editMemberNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedMember();
+    });
+    editMemberModal.addEventListener('click', (event) => {
+      if (event.target === editMemberModal) closeEditMemberModal();
+    });
+
+    function openCategoryModal() {
+      categoryModal.classList.add('show');
+      newCategoryNameInput.value = '';
+      newCategoryNameInput.focus();
+    }
+
+    function closeCategoryModal() {
+      categoryModal.classList.remove('show');
+    }
+
+    function confirmAddCategory() {
+      const name = newCategoryNameInput.value.trim();
+      if (!name) {
+        newCategoryNameInput.focus();
+        return;
+      }
+      if (categories.includes(name)) {
+        newCategoryNameInput.select();
+        return;
+      }
+      categories.push(name);
+      saveCategories();
+      renderCategoryCards();
+      syncCategorySelect(name);
+      renderChecklistItems();
+      closeCategoryModal();
+    }
+
+    addCategoryOpenBtn.addEventListener('click', openCategoryModal);
+    cancelCategoryBtn.addEventListener('click', closeCategoryModal);
+    confirmCategoryBtn.addEventListener('click', confirmAddCategory);
+    newCategoryNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmAddCategory();
+    });
+    categoryModal.addEventListener('click', (event) => {
+      if (event.target === categoryModal) closeCategoryModal();
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const nameEl = event.target.closest('.category-name');
+      if (!nameEl) return;
+      const cat = nameEl.dataset.categoryName;
+      if (!cat) return;
+      openEditCategoryModal(cat);
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const addBtn = event.target.closest('.category-add');
+      if (addBtn) {
+        event.preventDefault();
+        openModal(addBtn.dataset.categoryName);
+        return;
+      }
+      const btn = event.target.closest('.category-delete');
+      if (!btn) return;
+      event.preventDefault();
+      const catName = btn.dataset.categoryName;
+      openConfirmDelete(() => removeCategoryByName(catName));
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const collapseBtn = event.target.closest('.category-collapse-btn');
+      if (!collapseBtn) return;
+      if (suppressCategoryToggleClick) return;
+      const cat = collapseBtn.dataset.categoryName;
+      if (!cat) return;
+      collapsedCategories[cat] = !collapsedCategories[cat];
+      if (!collapsedCategories[cat]) delete collapsedCategories[cat];
+      saveCategoryCollapseState();
+      const card = collapseBtn.closest('.checklist-category-card');
+      if (!card) return;
+      applyCategoryCollapseState(card, cat);
+    });
+
+    categoriesContainer.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const collapseBtn = event.target.closest('.category-collapse-btn');
+      if (!collapseBtn) return;
+      event.preventDefault();
+      collapseBtn.click();
+    });
+
+    function openInviteJoinModal() {
+      inviteJoinModal.classList.add('show');
+    }
+
+    function closeInviteJoinModal() {
+      inviteJoinModal.classList.remove('show');
+    }
+
+    function openModal(categoryName = null) {
+      addItemTargetCategory = categoryName || null;
+      categorySelectGroup.hidden = !!categoryName;
+      modal.classList.add('show');
+      itemNameInput.value = '';
+      if (categoryName) {
+        syncCategorySelect(categoryName);
+      } else {
+        syncCategorySelect(categories.length ? categories[0] : '');
+      }
+      renderOwnerOptions();
+      itemNameInput.focus();
+    }
+
+    function closeModal() {
+      addItemTargetCategory = null;
+      categorySelectGroup.hidden = false;
+      modal.classList.remove('show');
+    }
+
+    function openEditOwnersModal(itemId) {
+      const item = checklistItems.find(entry => entry.id === itemId);
+      if (!item) return;
+      editingItemId = itemId;
+      editItemNameInput.value = item.name;
+      editOwnersItemLabel.textContent = '负责人（可多选）';
+      renderOwnerCheckboxes(editOwnerOptions, item.owners || [], false);
+      editOwnersModal.classList.add('show');
+      editItemNameInput.focus();
+    }
+
+    function closeEditOwnersModal() {
+      editOwnersModal.classList.remove('show');
+      editingItemId = null;
+    }
+
+    function saveEditedOwners() {
+      if (!editingItemId) return;
+      const item = checklistItems.find(entry => entry.id === editingItemId);
+      if (!item) return;
+      const nextName = editItemNameInput.value.trim();
+      if (!nextName) {
+        editItemNameInput.focus();
+        return;
+      }
+      item.name = nextName;
+      item.owners = Array.from(editOwnerOptions.querySelectorAll('input[name="owners"]:checked'))
+        .map(checkbox => checkbox.value);
+      item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
+      item.completed = isItemAllOwnersComplete(item);
+      saveChecklistItems();
+      renderChecklistItems();
+      closeEditOwnersModal();
+    }
+
+    function getPendingOwners(item) {
+      const done = new Set(item.completedOwners || []);
+      return (item.owners || []).filter(name => !done.has(name));
+    }
+
+    function isItemAllOwnersComplete(item) {
+      const owners = item.owners || [];
+      if (!owners.length) return !!item.completed;
+      const done = new Set(item.completedOwners || []);
+      return owners.every(name => done.has(name));
+    }
+
+    function normalizeItemCompletion(item) {
+      if (!Array.isArray(item.owners)) item.owners = [];
+      if (!Array.isArray(item.completedOwners)) item.completedOwners = [];
+      item.completedOwners = item.completedOwners.filter(name => item.owners.includes(name));
+      if (item.completed && item.owners.length && !item.completedOwners.length) {
+        item.completedOwners = [...item.owners];
+      }
+      item.completed = isItemAllOwnersComplete(item);
+    }
+
+    function toggleOwnerCompletion(item, ownerName) {
+      if (!(item.owners || []).includes(ownerName)) return;
+      if (!item.completedOwners) item.completedOwners = [];
+      const idx = item.completedOwners.indexOf(ownerName);
+      if (idx === -1) item.completedOwners.push(ownerName);
+      else item.completedOwners.splice(idx, 1);
+      item.completed = isItemAllOwnersComplete(item);
+    }
+
+    function createItemElement(itemData) {
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.dataset.itemId = itemData.id;
+
+      normalizeItemCompletion(itemData);
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = isItemAllOwnersComplete(itemData);
+
+      const name = document.createElement('span');
+      name.className = 'item-name';
+      name.textContent = itemData.name;
+
+      const avatars = document.createElement('div');
+      avatars.className = 'avatars';
+      const pendingOwners = getPendingOwners(itemData);
+      const maxVisible = 3;
+      pendingOwners.slice(0, maxVisible).forEach(ownerName => {
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.dataset.ownerName = ownerName;
+        avatar.style.background = colorForName(ownerName);
+        avatar.textContent = (ownerName || '').charAt(0) || '?';
+        avatar.title = `${ownerName}（点击标记完成）`;
+        avatar.setAttribute('role', 'button');
+        avatar.setAttribute('tabindex', '0');
+        avatar.setAttribute('aria-label', `${ownerName} 标记完成`);
+        avatars.appendChild(avatar);
+      });
+      const extraCount = pendingOwners.length - maxVisible;
+      if (extraCount > 0) {
+        const more = document.createElement('div');
+        more.className = 'avatar avatar-more';
+        more.textContent = `+${extraCount}`;
+        more.title = pendingOwners.slice(maxVisible).join('、');
+        avatars.appendChild(more);
+      }
+
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'item-delete';
+      deleteButton.type = 'button';
+      deleteButton.setAttribute('aria-label', '删除物品');
+      deleteButton.textContent = '×';
+
+      item.appendChild(checkbox);
+      item.appendChild(name);
+      item.appendChild(avatars);
+      item.appendChild(deleteButton);
+      item.classList.toggle('completed', isItemAllOwnersComplete(itemData));
+      return item;
+    }
+
+    function renderChecklistItems() {
+      Object.values(categoryCards).forEach(card => {
+        card.querySelectorAll('.item').forEach(el => el.remove());
+      });
+
+      checklistItems.forEach(itemData => {
+        const card = categoryCards[itemData.category];
+        if (!card) return;
+        card.appendChild(createItemElement(itemData));
+      });
+    }
+
+    function loadChecklistItems() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length) {
+            checklistItems = parsed;
+            checklistItems.forEach(normalizeItemCompletion);
+            mergeCategoriesFromItems();
+            return;
+          }
+          if (Array.isArray(parsed)) {
+            checklistItems = [];
+            mergeCategoriesFromItems();
+            return;
+          }
+        }
+      } catch (error) {
+        checklistItems = [];
+      }
+
+      checklistItems = getDefaultSeedItems();
+      mergeCategoriesFromItems();
+      saveChecklistItems();
+    }
+
+    function addItemToCategory() {
+      const name = itemNameInput.value.trim();
+      const category = addItemTargetCategory || categorySelect.value;
+      const owners = Array.from(ownerOptions.querySelectorAll('input[name="owners"]:checked'))
+        .map(checkbox => checkbox.value);
+
+      if (!name) {
+        itemNameInput.focus();
+        return;
+      }
+      if (!owners.length) return;
+
+      const card = categoryCards[category];
+      if (!card) return;
+
+      checklistItems.push({
+        id: createId(),
+        name,
+        category,
+        owners,
+        completedOwners: [],
+        completed: false
+      });
+      saveChecklistItems();
+      renderChecklistItems();
+      closeModal();
+    }
+
+    cancelDeleteBtn.addEventListener('click', closeConfirmDelete);
+    confirmDeleteBtn.addEventListener('click', executeConfirmDelete);
+    confirmDeleteModal.addEventListener('click', (event) => {
+      if (event.target === confirmDeleteModal) closeConfirmDelete();
+    });
+
+    addButton.addEventListener('click', openInviteJoinModal);
+    closeInviteJoinBtn.addEventListener('click', closeInviteJoinModal);
+    inviteJoinModal.addEventListener('click', (event) => {
+      if (event.target === inviteJoinModal) closeInviteJoinModal();
+    });
+    cancelAddBtn.addEventListener('click', closeModal);
+    confirmAddBtn.addEventListener('click', addItemToCategory);
+    cancelEditOwnersBtn.addEventListener('click', closeEditOwnersModal);
+    saveEditOwnersBtn.addEventListener('click', saveEditedOwners);
+
+    itemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') addItemToCategory();
+    });
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+
+    editOwnersModal.addEventListener('click', (event) => {
+      if (event.target === editOwnersModal) closeEditOwnersModal();
+    });
+
+    editItemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedOwners();
+    });
+
+    document.addEventListener('change', (event) => {
+      if (event.target.matches('.item input[type="checkbox"]')) {
+        const item = event.target.closest('.item');
+        if (!item) return;
+
+        item.classList.toggle('completed', event.target.checked);
+        const itemId = item.dataset.itemId;
+        const targetItem = checklistItems.find(entry => entry.id === itemId);
+        if (!targetItem) return;
+
+        if (event.target.checked) {
+          targetItem.completedOwners = [...(targetItem.owners || [])];
+        } else {
+          targetItem.completedOwners = [];
+        }
+        targetItem.completed = event.target.checked;
+        saveChecklistItems();
+        renderChecklistItems();
+        return;
+      }
+      if (event.target.matches('.owner-all-checkbox')) {
+        const container = event.target.closest('.owner-options');
+        if (!container) return;
+        const checked = event.target.checked;
+        container.querySelectorAll('input[name="owners"]').forEach(cb => {
+          cb.checked = checked;
+        });
+        return;
+      }
+      if (event.target.matches('input[name="owners"]')) {
+        const container = event.target.closest('.owner-options');
+        if (container) syncOwnerAllCheckboxState(container);
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const deleteBtn = event.target.closest('.item-delete');
+      if (!deleteBtn) return;
+
+      const item = deleteBtn.closest('.item');
+      if (!item) return;
+
+      const itemId = item.dataset.itemId;
+      openConfirmDelete(() => removeItemById(itemId));
+    });
+
+    document.addEventListener('click', (event) => {
+      const avatar = event.target.closest('.avatars .avatar:not(.avatar-more)');
+      if (avatar) {
+        event.stopPropagation();
+        const item = avatar.closest('.item');
+        if (!item) return;
+        const ownerName = avatar.dataset.ownerName;
+        if (!ownerName) return;
+        const targetItem = checklistItems.find(entry => entry.id === item.dataset.itemId);
+        if (!targetItem) return;
+        toggleOwnerCompletion(targetItem, ownerName);
+        saveChecklistItems();
+        renderChecklistItems();
+        return;
+      }
+
+      const itemName = event.target.closest('.item-name');
+      if (!itemName) return;
+      const item = itemName.closest('.item');
+      if (!item) return;
+      openEditOwnersModal(item.dataset.itemId);
+    });
+
+    tripTitleEl.addEventListener('click', openEditTripTitleModal);
+    tripTitleEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openEditTripTitleModal();
+      }
+    });
+    cancelEditTripTitleBtn.addEventListener('click', closeEditTripTitleModal);
+    saveEditTripTitleBtn.addEventListener('click', saveEditedTripTitle);
+    editTripTitleInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedTripTitle();
+    });
+    editTripTitleModal.addEventListener('click', (event) => {
+      if (event.target === editTripTitleModal) closeEditTripTitleModal();
+    });
+
+    membersSectionTitleEl.addEventListener('click', openEditMembersSectionTitleModal);
+    membersSectionTitleEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openEditMembersSectionTitleModal();
+      }
+    });
+    cancelEditMembersSectionTitleBtn.addEventListener('click', closeEditMembersSectionTitleModal);
+    saveEditMembersSectionTitleBtn.addEventListener('click', saveEditedMembersSectionTitle);
+    editMembersSectionTitleInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedMembersSectionTitle();
+    });
+    editMembersSectionTitleModal.addEventListener('click', (event) => {
+      if (event.target === editMembersSectionTitleModal) closeEditMembersSectionTitleModal();
+    });
+
+    cancelEditCategoryBtn.addEventListener('click', closeEditCategoryModal);
+    saveEditCategoryBtn.addEventListener('click', saveEditedCategory);
+    editCategoryNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedCategory();
+    });
+    editCategoryModal.addEventListener('click', (event) => {
+      if (event.target === editCategoryModal) closeEditCategoryModal();
+    });
+
+    loadMembers();
+    loadTripTitle();
+    renderTripTitle();
+    loadMembersSectionTitle();
+    renderMembersSectionTitle();
+    renderMemberList();
+    loadCategories();
+    loadCategoryCollapseState();
+    renderCategoryCards();
+    loadChecklistItems();
+    if (mergeCategoriesFromItems()) {
+      renderCategoryCards();
+    }
+    syncCategorySelect();
+    renderOwnerOptions();
+    renderChecklistItems();
+
+  </script>
+
+</body>
+</html>

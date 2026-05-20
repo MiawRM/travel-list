@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅行清单</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #eef6ff;
+      font-family: Arial, sans-serif;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #2c5c8a;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .category {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #3b82f6;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .item span {
+      margin-left: 10px;
+      font-size: 18px;
+      color: #ef4444;
+      transition: 0.3s;
+    }
+
+    .item.completed span {
+      color: #3b82f6;
+    }
+
+    .avatars {
+      margin-left: auto;
+      display: flex;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #93c5fd;
+      margin-left: -6px;
+      border: 2px solid white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .add-button {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: #60a5fa;
+      color: white;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 92, 138, 0.25);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(59, 130, 246, 0.2);
+    }
+
+    .modal h3 {
+      margin: 0 0 14px;
+      color: #2c5c8a;
+      font-size: 20px;
+    }
+
+    .modal label {
+      display: block;
+      margin-bottom: 6px;
+      color: #3b82f6;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .modal input,
+    .modal select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      background: #f8fbff;
+      color: #2c5c8a;
+      outline: none;
+    }
+
+    .modal input:focus,
+    .modal select:focus {
+      border-color: #60a5fa;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .owner-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .owner-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f3f8ff;
+      border: 1px solid #dbeafe;
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: #2c5c8a;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .owner-chip input {
+      margin: 0;
+      width: 14px;
+      height: 14px;
+      accent-color: #60a5fa;
+    }
+
+    .modal-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .modal-btn.cancel {
+      background: #e5efff;
+      color: #3b82f6;
+    }
+
+    .modal-btn.confirm {
+      background: #60a5fa;
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="title">克罗地亚之旅</div>
+
+  <div class="card">
+
+    <div class="category">🌊 海边装备</div>
+
+    <div class="item">
+      <input type="checkbox">
+      <span>防晒霜</span>
+
+      <div class="avatars">
+        <div class="avatar"></div>
+      </div>
+    </div>
+
+    <div class="item">
+      <input type="checkbox">
+      <span>浮潜面罩</span>
+
+      <div class="avatars">
+        <div class="avatar"></div>
+        <div class="avatar"></div>
+      </div>
+    </div>
+
+  <div class="item">
+        <input type="checkbox">
+        <span>泳衣</span>
+        <div class="avatars">
+          <div class="avatar">我</div><div class="avatar">小</div>
+        </div>
+      </div></div>
+
+  <div class="card">
+
+    <div class="category">💊 药品</div>
+
+    <div class="item">
+      <input type="checkbox">
+      <span>晕船药</span>
+
+      <div class="avatars">
+        <div class="avatar"></div>
+      </div>
+    </div>
+
+  <div class="item">
+        <input type="checkbox">
+        <span>ASS</span>
+        <div class="avatars">
+          <div class="avatar">小</div>
+        </div>
+      </div></div>
+
+  <div class="card">
+    <div class="category">👕 衣物</div>
+  </div>
+
+  <button class="add-button">
+    ＋ 添加物品
+  </button>
+
+  <div class="modal-overlay" id="addItemModal">
+    <div class="modal">
+      <h3>添加新物品</h3>
+
+      <label for="itemNameInput">物品名称</label>
+      <input id="itemNameInput" type="text" placeholder="例如：泳衣" value="ASS">
+
+      <label for="categorySelect">分类</label>
+      <select id="categorySelect">
+        <option value="海边装备">海边装备</option>
+        <option value="药品" selected="selected">药品</option>
+        <option value="衣物">衣物</option>
+      </select>
+
+      <label>负责人（可多选）</label>
+      <div class="owner-options" id="ownerOptions">
+        <label class="owner-chip">
+          <input type="checkbox" name="owners" value="我">
+          我
+        </label>
+        <label class="owner-chip">
+          <input type="checkbox" name="owners" value="小李">
+          小李
+        </label>
+        <label class="owner-chip">
+          <input type="checkbox" name="owners" value="小王" checked="checked">
+          小王
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn cancel" id="cancelAddBtn">取消</button>
+        <button class="modal-btn confirm" id="confirmAddBtn">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const addButton = document.querySelector('.add-button');
+    const modal = document.getElementById('addItemModal');
+    const itemNameInput = document.getElementById('itemNameInput');
+    const categorySelect = document.getElementById('categorySelect');
+    const ownerOptions = document.getElementById('ownerOptions');
+    const cancelAddBtn = document.getElementById('cancelAddBtn');
+    const confirmAddBtn = document.getElementById('confirmAddBtn');
+
+    const categoryCards = {};
+    document.querySelectorAll('.card').forEach(card => {
+      const categoryTitle = card.querySelector('.category');
+      if (!categoryTitle) return;
+      const cleanName = categoryTitle.textContent.replace(/^[^\u4e00-\u9fa5A-Za-z]+/, '').trim();
+      categoryCards[cleanName] = card;
+    });
+
+    function openModal() {
+      modal.classList.add('show');
+      itemNameInput.value = '';
+      categorySelect.value = '海边装备';
+      ownerOptions.querySelectorAll('input[name="owners"]').forEach((checkbox, index) => {
+        checkbox.checked = index === 0;
+      });
+      itemNameInput.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('show');
+    }
+
+    function createItemElement(name, owners) {
+      const avatarsMarkup = owners
+        .map(owner => `<div class="avatar">${owner.charAt(0)}</div>`)
+        .join('');
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML = `
+        <input type="checkbox" />
+        <span>${name}</span>
+        <div class="avatars">
+          ${avatarsMarkup}
+        </div>
+      `;
+      return item;
+    }
+
+    function addItemToCategory() {
+      const name = itemNameInput.value.trim();
+      const category = categorySelect.value;
+      const owners = Array.from(ownerOptions.querySelectorAll('input[name="owners"]:checked'))
+        .map(checkbox => checkbox.value);
+
+      if (!name) {
+        itemNameInput.focus();
+        return;
+      }
+      if (!owners.length) return;
+
+      const card = categoryCards[category];
+      if (!card) return;
+
+      const newItem = createItemElement(name, owners);
+      card.appendChild(newItem);
+      closeModal();
+    }
+
+    addButton.addEventListener('click', openModal);
+    cancelAddBtn.addEventListener('click', closeModal);
+    confirmAddBtn.addEventListener('click', addItemToCategory);
+
+    itemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') addItemToCategory();
+    });
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+
+    document.addEventListener('change', (event) => {
+      if (event.target.matches('.item input[type="checkbox"]')) {
+        const item = event.target.closest('.item');
+        if (item) item.classList.toggle('completed', event.target.checked);
+      }
+    });
+
+  </script>
+
+
+</body></html>
