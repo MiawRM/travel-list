@@ -70,6 +70,8 @@
       border: none;
       background: transparent;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
@@ -121,6 +123,61 @@
       display: none;
     }
 
+    .member-pending-list {
+      list-style: none;
+      margin: 0 0 12px;
+      padding: 0;
+      max-height: 50vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .member-pending-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #eff6ff;
+      color: #ef4444;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .member-pending-item:last-child {
+      border-bottom: none;
+    }
+
+    .member-pending-empty {
+      margin: 0 0 14px;
+      color: #64748b;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .member-action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .member-action-btn {
+      width: 100%;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      background: #f8fbff;
+      color: #2c5c8a;
+      touch-action: manipulation;
+    }
+
+    .member-action-btn-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+
     .member-empty {
       font-size: 14px;
       color: #64748b;
@@ -145,8 +202,7 @@
     .checklist-category-card .category-card-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 15px;
     }
 
@@ -155,14 +211,17 @@
     }
 
     .category-header-start {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      flex: 0 1 auto;
+      flex: 0 0 auto;
+      max-width: calc(100% - 72px);
       min-width: 0;
     }
 
     .category-collapse-btn {
+      position: relative;
+      z-index: 1;
       flex-shrink: 0;
       width: 32px;
       height: 32px;
@@ -178,9 +237,21 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
+    }
+
+    .category-collapse-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 44px;
+      height: 44px;
+      transform: translate(-50%, -50%);
     }
 
     .category-collapse-btn:hover {
@@ -190,14 +261,48 @@
 
     .category-name {
       flex: 0 1 auto;
-      min-width: 0;
+      width: fit-content;
+      max-width: min(52vw, 220px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       -webkit-user-select: none;
       user-select: none;
     }
 
     .category-name:hover {
       color: #2563eb;
+    }
+
+    .category-drag-handle {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 20px;
+      height: 28px;
+      align-self: stretch;
+      border-radius: 4px;
+      background: transparent;
+      cursor: grab;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .category-drag-handle:active,
+    .checklist-category-card.category-sortable-chosen .category-drag-handle {
+      cursor: grabbing;
+    }
+
+    .checklist-category-card.category-sortable-chosen .category-collapse-btn,
+    .checklist-category-card.category-sortable-chosen .category-name,
+    .checklist-category-card.category-sortable-chosen .category-add,
+    .checklist-category-card.category-sortable-chosen .category-delete {
+      cursor: pointer;
     }
 
     .checklist-category-card.category-sortable-ghost {
@@ -213,6 +318,9 @@
     }
 
     .category-add {
+      position: relative;
+      flex-shrink: 0;
+      margin-left: 4px;
       width: 28px;
       height: 28px;
       border: none;
@@ -225,7 +333,21 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .category-add::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 44px;
+      height: 44px;
+      transform: translate(-50%, -50%);
     }
 
     .category-add:hover {
@@ -237,8 +359,10 @@
     }
 
     .category-delete {
+      position: relative;
       width: 28px;
       height: 28px;
+      margin-left: auto;
       border: none;
       border-radius: 50%;
       background: #fee2e2;
@@ -247,6 +371,8 @@
       line-height: 1;
       cursor: pointer;
       display: inline-flex;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
@@ -628,7 +754,7 @@
 
   <div class="modal-overlay" id="addItemModal">
     <div class="modal">
-      <h3>添加新物品</h3>
+      <h3 id="addItemModalTitle">添加新物品</h3>
 
       <label for="itemNameInput">物品名称</label>
       <input id="itemNameInput" type="text" placeholder="例如：泳衣" />
@@ -724,6 +850,30 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="memberPendingModal">
+    <div class="modal">
+      <h3 id="memberPendingTitle">还没准备</h3>
+      <ul class="member-pending-list" id="memberPendingList"></ul>
+      <p class="member-pending-empty" id="memberPendingEmpty" hidden>已全部准备好 🎉</p>
+      <div class="modal-actions member-pending-actions">
+        <button type="button" class="modal-btn confirm" id="closeMemberPendingBtn">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="memberActionModal">
+    <div class="modal">
+      <h3 id="memberActionTitle">成员</h3>
+      <div class="member-action-list">
+        <button type="button" class="member-action-btn" id="memberActionEditBtn">编辑成员名称</button>
+        <button type="button" class="member-action-btn member-action-btn-danger" id="memberActionDeleteBtn">删除成员</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelMemberActionBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="confirmDeleteModal">
     <div class="modal">
       <h3 id="confirmDeleteTitle">确认删除？</h3>
@@ -755,6 +905,7 @@
     const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
     const saveEditCategoryBtn = document.getElementById('saveEditCategoryBtn');
     const modal = document.getElementById('addItemModal');
+    const addItemModalTitle = document.getElementById('addItemModalTitle');
     const itemNameInput = document.getElementById('itemNameInput');
     const categorySelect = document.getElementById('categorySelect');
     const categorySelectGroup = document.getElementById('categorySelectGroup');
@@ -776,6 +927,16 @@
     const cancelAddMemberBtn = document.getElementById('cancelAddMemberBtn');
     const saveAddMemberBtn = document.getElementById('saveAddMemberBtn');
     const memberList = document.getElementById('memberList');
+    const memberPendingModal = document.getElementById('memberPendingModal');
+    const memberPendingTitle = document.getElementById('memberPendingTitle');
+    const memberPendingList = document.getElementById('memberPendingList');
+    const memberPendingEmpty = document.getElementById('memberPendingEmpty');
+    const closeMemberPendingBtn = document.getElementById('closeMemberPendingBtn');
+    const memberActionModal = document.getElementById('memberActionModal');
+    const memberActionTitle = document.getElementById('memberActionTitle');
+    const memberActionEditBtn = document.getElementById('memberActionEditBtn');
+    const memberActionDeleteBtn = document.getElementById('memberActionDeleteBtn');
+    const cancelMemberActionBtn = document.getElementById('cancelMemberActionBtn');
     const categoriesContainer = document.getElementById('categoriesContainer');
     const categoryModal = document.getElementById('addCategoryModal');
     const newCategoryNameInput = document.getElementById('newCategoryNameInput');
@@ -847,11 +1008,12 @@
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
-    let suppressCategoryToggleClick = false;
+    let suppressCategoryHeaderClick = false;
     let categorySortable = null;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
     let memberPressStart = null;
+    let memberActionTargetId = null;
     const MEMBER_LONG_PRESS_MS = 500;
     const DELETE_COPY = {
       default: { title: '确认删除？', message: '删除后无法恢复' },
@@ -868,6 +1030,11 @@
 
     function categoryHeading(key) {
       return `${iconForCategoryName(key)} ${key}`;
+    }
+
+    function formatAddItemModalTitle(categoryName) {
+      if (!categoryName) return '添加新物品';
+      return `${iconForCategoryName(categoryName)} 添加到${categoryName}`;
     }
 
     function colorForName(name) {
@@ -1087,6 +1254,24 @@
       }
     }
 
+    function toggleCategoryCollapse(cat) {
+      if (!cat) return;
+      collapsedCategories[cat] = !collapsedCategories[cat];
+      if (!collapsedCategories[cat]) delete collapsedCategories[cat];
+      saveCategoryCollapseState();
+      const card = categoryCards[cat];
+      if (card) applyCategoryCollapseState(card, cat);
+    }
+
+    function bindCategoryHeaderControl(el, handler) {
+      if (!el) return;
+      el.addEventListener('click', (event) => {
+        if (suppressCategoryHeaderClick) return;
+        event.stopPropagation();
+        handler(event);
+      });
+    }
+
     function openConfirmDelete(onConfirm, copyKey = 'default') {
       const copy = DELETE_COPY[copyKey] || DELETE_COPY.default;
       confirmDeleteTitle.textContent = copy.title;
@@ -1170,11 +1355,6 @@
         addItemBtn.dataset.categoryName = cat;
         addItemBtn.setAttribute('aria-label', `添加物品到${cat}`);
         addItemBtn.textContent = '＋';
-        const headerStart = document.createElement('div');
-        headerStart.className = 'category-header-start';
-        headerStart.appendChild(collapseBtn);
-        headerStart.appendChild(nameSpan);
-        headerStart.appendChild(addItemBtn);
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.className = 'category-delete';
@@ -1182,8 +1362,25 @@
         delBtn.setAttribute('aria-label', '删除分类');
         delBtn.textContent = '×';
         delBtn.disabled = categories.length <= 1;
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'category-drag-handle';
+        dragHandle.setAttribute('aria-hidden', 'true');
+        dragHandle.title = '长按拖动排序';
+        const headerStart = document.createElement('div');
+        headerStart.className = 'category-header-start';
+        headerStart.appendChild(collapseBtn);
+        headerStart.appendChild(nameSpan);
+        headerStart.appendChild(addItemBtn);
         header.appendChild(headerStart);
+        header.appendChild(dragHandle);
         header.appendChild(delBtn);
+
+        bindCategoryHeaderControl(collapseBtn, () => toggleCategoryCollapse(cat));
+        bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
+        bindCategoryHeaderControl(nameSpan, () => openEditCategoryModal(cat));
+        bindCategoryHeaderControl(delBtn, () => {
+          openConfirmDelete(() => removeCategoryByName(cat));
+        });
         card.appendChild(header);
         applyCategoryCollapseState(card, cat);
 
@@ -1216,28 +1413,25 @@
       categorySortable = Sortable.create(categoriesContainer, {
         animation: 150,
         draggable: '.checklist-category-card',
-        handle: '.category-header-start',
-        delay: 450,
+        handle: '.category-drag-handle',
+        delay: 500,
         delayOnTouchOnly: false,
-        touchStartThreshold: 6,
-        forceFallback: true,
-        fallbackTolerance: 4,
+        touchStartThreshold: 12,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
-        filter: '.category-add, .category-delete, .category-collapse-btn',
+        filter: '.category-collapse-btn, .category-name, .category-add, .category-delete',
         preventOnFilter: true,
         onStart() {
-          suppressCategoryToggleClick = false;
+          suppressCategoryHeaderClick = true;
         },
         onEnd(evt) {
           if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
-            suppressCategoryToggleClick = true;
             persistCategoryOrderFromDom();
           }
           window.setTimeout(() => {
-            suppressCategoryToggleClick = false;
-          }, 320);
+            suppressCategoryHeaderClick = false;
+          }, 400);
         }
       });
     }
@@ -1328,7 +1522,8 @@
         chip.type = 'button';
         chip.className = 'member-chip';
         chip.dataset.memberId = m.id;
-        chip.setAttribute('aria-label', `成员 ${m.name}`);
+        chip.setAttribute('aria-label', `${m.name}，点击查看待准备物品，长按更多操作`);
+        chip.title = '点击查看待准备物品，长按更多操作';
         const av = document.createElement('div');
         av.className = 'member-avatar';
         av.style.background = colorForName(m.name);
@@ -1357,10 +1552,13 @@
       const removedName = members[idx].name;
       members.splice(idx, 1);
       checklistItems.forEach(item => {
-        if (!item.owners || !item.owners.length) return;
-        item.owners = item.owners.filter(o => o !== removedName);
         if (item.completedOwners) {
           item.completedOwners = item.completedOwners.filter(o => o !== removedName);
+        }
+        if (item.isAllMembers) {
+          syncItemAllMembersOwners(item);
+        } else if (item.owners && item.owners.length) {
+          item.owners = item.owners.filter(o => o !== removedName);
         }
         item.completed = isItemAllOwnersComplete(item);
       });
@@ -1369,6 +1567,69 @@
       renderMemberList();
       renderOwnerOptions();
       renderChecklistItems();
+    }
+
+    function isOwnerPendingForItem(item, ownerName) {
+      const owners = item.owners || [];
+      if (!owners.includes(ownerName)) return false;
+      return !(item.completedOwners || []).includes(ownerName);
+    }
+
+    function getMemberPendingItems(memberName) {
+      return checklistItems.filter(item => isOwnerPendingForItem(item, memberName));
+    }
+
+    function sortItemsByCategoryOrder(items) {
+      const orderMap = new Map(categories.map((cat, index) => [cat, index]));
+      return [...items].sort((a, b) => {
+        const catA = orderMap.get(a.category) ?? 999;
+        const catB = orderMap.get(b.category) ?? 999;
+        if (catA !== catB) return catA - catB;
+        return String(a.name).localeCompare(String(b.name), 'zh');
+      });
+    }
+
+    function renderMemberPendingList(memberName) {
+      const pending = sortItemsByCategoryOrder(getMemberPendingItems(memberName));
+      memberPendingList.innerHTML = '';
+      if (!pending.length) {
+        memberPendingEmpty.hidden = false;
+        return;
+      }
+      memberPendingEmpty.hidden = true;
+      pending.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'member-pending-item';
+        li.textContent = `☐ ${item.name}`;
+        memberPendingList.appendChild(li);
+      });
+    }
+
+    function openMemberPendingModal(memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+      memberPendingTitle.textContent = `${member.name} 还没准备`;
+      renderMemberPendingList(member.name);
+      memberPendingModal.classList.add('show');
+    }
+
+    function closeMemberPendingModal() {
+      memberPendingModal.classList.remove('show');
+      memberPendingList.innerHTML = '';
+      memberPendingEmpty.hidden = true;
+    }
+
+    function openMemberActionModal(memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+      memberActionTargetId = memberId;
+      memberActionTitle.textContent = member.name;
+      memberActionModal.classList.add('show');
+    }
+
+    function closeMemberActionModal() {
+      memberActionTargetId = null;
+      memberActionModal.classList.remove('show');
     }
 
     function openEditMemberModal(memberId) {
@@ -1403,10 +1664,13 @@
       if (oldName !== nextName) {
         member.name = nextName;
         checklistItems.forEach(item => {
-          if (!item.owners || !item.owners.length) return;
-          item.owners = item.owners.map(o => (o === oldName ? nextName : o));
           if (item.completedOwners) {
             item.completedOwners = item.completedOwners.map(o => (o === oldName ? nextName : o));
+          }
+          if (item.isAllMembers) {
+            syncItemAllMembersOwners(item);
+          } else if (item.owners && item.owners.length) {
+            item.owners = item.owners.map(o => (o === oldName ? nextName : o));
           }
           item.completed = isItemAllOwnersComplete(item);
         });
@@ -1417,6 +1681,51 @@
         renderChecklistItems();
       }
       closeEditMemberModal();
+    }
+
+    function getAllMemberNames() {
+      return members.map(m => m.name).filter(Boolean);
+    }
+
+    function ownersMatchAllMembers(owners) {
+      const allNames = getAllMemberNames();
+      if (!allNames.length || !owners || !owners.length) return false;
+      if (owners.length !== allNames.length) return false;
+      const set = new Set(owners);
+      return allNames.every(name => set.has(name));
+    }
+
+    function syncItemAllMembersOwners(item) {
+      if (!item.isAllMembers) return;
+      item.owners = getAllMemberNames();
+      if (!Array.isArray(item.completedOwners)) item.completedOwners = [];
+      item.completedOwners = item.completedOwners.filter(name => item.owners.includes(name));
+      item.completed = isItemAllOwnersComplete(item);
+    }
+
+    function syncAllMembersItems() {
+      checklistItems.forEach(syncItemAllMembersOwners);
+    }
+
+    function normalizeItemAllMembers(item) {
+      if (item.isAllMembers === true) {
+        syncItemAllMembersOwners(item);
+        return;
+      }
+      if (item.isAllMembers !== false && ownersMatchAllMembers(item.owners)) {
+        item.isAllMembers = true;
+        syncItemAllMembersOwners(item);
+      }
+    }
+
+    function readOwnersFromContainer(container) {
+      const allCb = container.querySelector('.owner-all-checkbox');
+      const isAllMembers = !!(allCb && allCb.checked);
+      const owners = isAllMembers
+        ? getAllMemberNames()
+        : Array.from(container.querySelectorAll('input[name="owners"]:checked'))
+          .map(checkbox => checkbox.value);
+      return { owners, isAllMembers };
     }
 
     function syncOwnerAllCheckboxState(container) {
@@ -1430,7 +1739,12 @@
       allCb.checked = [...memberBoxes].every(cb => cb.checked);
     }
 
-    function renderOwnerCheckboxes(container, selectedOwners = [], selectFirstByDefault = false) {
+    function renderOwnerCheckboxes(container, options = {}) {
+      const {
+        selectedOwners = [],
+        isAllMembers = false,
+        selectFirstByDefault = false
+      } = options;
       container.innerHTML = '';
       if (!members.length) {
         const hint = document.createElement('div');
@@ -1462,7 +1776,9 @@
         input.type = 'checkbox';
         input.name = 'owners';
         input.value = m.name;
-        input.checked = selectedOwners.includes(m.name) || (selectFirstByDefault && selectedOwners.length === 0 && index === 0);
+        input.checked = isAllMembers
+          || selectedOwners.includes(m.name)
+          || (selectFirstByDefault && selectedOwners.length === 0 && !isAllMembers && index === 0);
         const mini = document.createElement('span');
         mini.className = 'owner-chip-avatar';
         mini.style.background = colorForName(m.name);
@@ -1474,11 +1790,18 @@
         label.appendChild(nameSpan);
         container.appendChild(label);
       });
-      syncOwnerAllCheckboxState(container);
+      if (isAllMembers) {
+        allInput.checked = true;
+        container.querySelectorAll('input[name="owners"]').forEach(cb => {
+          cb.checked = true;
+        });
+      } else {
+        syncOwnerAllCheckboxState(container);
+      }
     }
 
     function renderOwnerOptions() {
-      renderOwnerCheckboxes(ownerOptions, [], true);
+      renderOwnerCheckboxes(ownerOptions, { selectFirstByDefault: true });
     }
 
     function openAddMemberModal() {
@@ -1503,8 +1826,11 @@
       }
       members.push({ id: createId(), name });
       saveMembers();
+      syncAllMembersItems();
+      saveChecklistItems();
       renderMemberList();
       renderOwnerOptions();
+      renderChecklistItems();
       closeAddMemberModal();
     }
 
@@ -1526,7 +1852,7 @@
       clearMemberPressTimer();
       memberPressTimer = window.setTimeout(() => {
         memberLongPressTriggered = true;
-        openConfirmDeleteMember(memberId);
+        openMemberActionModal(memberId);
         clearMemberPressTimer();
       }, MEMBER_LONG_PRESS_MS);
     });
@@ -1564,7 +1890,26 @@
         memberLongPressTriggered = false;
         return;
       }
-      openEditMemberModal(chip.dataset.memberId);
+      openMemberPendingModal(chip.dataset.memberId);
+    });
+
+    closeMemberPendingBtn.addEventListener('click', closeMemberPendingModal);
+    memberPendingModal.addEventListener('click', (event) => {
+      if (event.target === memberPendingModal) closeMemberPendingModal();
+    });
+    cancelMemberActionBtn.addEventListener('click', closeMemberActionModal);
+    memberActionModal.addEventListener('click', (event) => {
+      if (event.target === memberActionModal) closeMemberActionModal();
+    });
+    memberActionEditBtn.addEventListener('click', () => {
+      const memberId = memberActionTargetId;
+      closeMemberActionModal();
+      if (memberId) openEditMemberModal(memberId);
+    });
+    memberActionDeleteBtn.addEventListener('click', () => {
+      const memberId = memberActionTargetId;
+      closeMemberActionModal();
+      if (memberId) openConfirmDeleteMember(memberId);
     });
 
     cancelEditMemberBtn.addEventListener('click', closeEditMemberModal);
@@ -1614,42 +1959,6 @@
       if (event.target === categoryModal) closeCategoryModal();
     });
 
-    categoriesContainer.addEventListener('click', (event) => {
-      const nameEl = event.target.closest('.category-name');
-      if (!nameEl) return;
-      const cat = nameEl.dataset.categoryName;
-      if (!cat) return;
-      openEditCategoryModal(cat);
-    });
-
-    categoriesContainer.addEventListener('click', (event) => {
-      const addBtn = event.target.closest('.category-add');
-      if (addBtn) {
-        event.preventDefault();
-        openModal(addBtn.dataset.categoryName);
-        return;
-      }
-      const btn = event.target.closest('.category-delete');
-      if (!btn) return;
-      event.preventDefault();
-      const catName = btn.dataset.categoryName;
-      openConfirmDelete(() => removeCategoryByName(catName));
-    });
-
-    categoriesContainer.addEventListener('click', (event) => {
-      const collapseBtn = event.target.closest('.category-collapse-btn');
-      if (!collapseBtn) return;
-      if (suppressCategoryToggleClick) return;
-      const cat = collapseBtn.dataset.categoryName;
-      if (!cat) return;
-      collapsedCategories[cat] = !collapsedCategories[cat];
-      if (!collapsedCategories[cat]) delete collapsedCategories[cat];
-      saveCategoryCollapseState();
-      const card = collapseBtn.closest('.checklist-category-card');
-      if (!card) return;
-      applyCategoryCollapseState(card, cat);
-    });
-
     categoriesContainer.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const collapseBtn = event.target.closest('.category-collapse-btn');
@@ -1669,6 +1978,9 @@
     function openModal(categoryName = null) {
       addItemTargetCategory = categoryName || null;
       categorySelectGroup.hidden = !!categoryName;
+      if (addItemModalTitle) {
+        addItemModalTitle.textContent = formatAddItemModalTitle(categoryName);
+      }
       modal.classList.add('show');
       itemNameInput.value = '';
       if (categoryName) {
@@ -1683,6 +1995,9 @@
     function closeModal() {
       addItemTargetCategory = null;
       categorySelectGroup.hidden = false;
+      if (addItemModalTitle) {
+        addItemModalTitle.textContent = '添加新物品';
+      }
       modal.classList.remove('show');
     }
 
@@ -1692,7 +2007,10 @@
       editingItemId = itemId;
       editItemNameInput.value = item.name;
       editOwnersItemLabel.textContent = '负责人（可多选）';
-      renderOwnerCheckboxes(editOwnerOptions, item.owners || [], false);
+      renderOwnerCheckboxes(editOwnerOptions, {
+        selectedOwners: item.owners || [],
+        isAllMembers: !!item.isAllMembers
+      });
       editOwnersModal.classList.add('show');
       editItemNameInput.focus();
     }
@@ -1712,8 +2030,9 @@
         return;
       }
       item.name = nextName;
-      item.owners = Array.from(editOwnerOptions.querySelectorAll('input[name="owners"]:checked'))
-        .map(checkbox => checkbox.value);
+      const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
+      item.isAllMembers = isAllMembers;
+      item.owners = owners;
       item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
       item.completed = isItemAllOwnersComplete(item);
       saveChecklistItems();
@@ -1734,6 +2053,7 @@
     }
 
     function normalizeItemCompletion(item) {
+      normalizeItemAllMembers(item);
       if (!Array.isArray(item.owners)) item.owners = [];
       if (!Array.isArray(item.completedOwners)) item.completedOwners = [];
       item.completedOwners = item.completedOwners.filter(name => item.owners.includes(name));
@@ -1847,8 +2167,7 @@
     function addItemToCategory() {
       const name = itemNameInput.value.trim();
       const category = addItemTargetCategory || categorySelect.value;
-      const owners = Array.from(ownerOptions.querySelectorAll('input[name="owners"]:checked'))
-        .map(checkbox => checkbox.value);
+      const { owners, isAllMembers } = readOwnersFromContainer(ownerOptions);
 
       if (!name) {
         itemNameInput.focus();
@@ -1864,6 +2183,7 @@
         name,
         category,
         owners,
+        isAllMembers,
         completedOwners: [],
         completed: false
       });
