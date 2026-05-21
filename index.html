@@ -225,11 +225,15 @@
 
     .category-collapse-btn {
       position: relative;
-      z-index: 1;
+      z-index: 3;
       flex-shrink: 0;
+      box-sizing: content-box;
       width: 32px;
       height: 32px;
-      padding: 0;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 6px;
+      margin: -6px;
       border: none;
       border-radius: 10px;
       background: transparent;
@@ -246,16 +250,7 @@
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
-    }
-
-    .category-collapse-btn::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 44px;
-      height: 44px;
-      transform: translate(-50%, -50%);
+      isolation: isolate;
     }
 
     .category-collapse-btn:hover {
@@ -283,12 +278,12 @@
 
     .category-drag-handle {
       position: relative;
-      z-index: 1;
+      z-index: 0;
       flex: 1 1 0;
       min-width: 24px;
-      height: 28px;
-      align-self: stretch;
-      margin: 0 4px;
+      height: 44px;
+      align-self: center;
+      margin: 0 6px;
       border-radius: 4px;
       background: transparent;
       cursor: grab;
@@ -326,13 +321,20 @@
 
     .category-add {
       position: relative;
+      z-index: 3;
       flex-shrink: 0;
-      margin-left: 4px;
+      box-sizing: content-box;
       width: 28px;
       height: 28px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+      margin: -8px;
+      margin-left: -4px;
       border: none;
       border-radius: 50%;
       background: #e5efff;
+      background-clip: padding-box;
       color: #60a5fa;
       font-size: 18px;
       line-height: 1;
@@ -345,16 +347,7 @@
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
-    }
-
-    .category-add::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 44px;
-      height: 44px;
-      transform: translate(-50%, -50%);
+      isolation: isolate;
     }
 
     .category-add:hover {
@@ -367,14 +360,20 @@
 
     .category-delete {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       pointer-events: auto;
+      box-sizing: content-box;
       width: 28px;
       height: 28px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+      margin: -8px;
       margin-left: auto;
       border: none;
       border-radius: 50%;
       background: #fee2e2;
+      background-clip: padding-box;
       color: #f87171;
       font-size: 18px;
       line-height: 1;
@@ -382,9 +381,11 @@
       display: inline-flex;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      isolation: isolate;
     }
 
     .category-delete:hover {
@@ -395,6 +396,59 @@
     .category-delete:disabled {
       opacity: 0.35;
       cursor: not-allowed;
+    }
+
+
+    @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+      .checklist-category-card .category-card-header {
+        gap: 4px;
+        min-height: 44px;
+      }
+
+      .category-header-start {
+        z-index: 4;
+        gap: 2px;
+      }
+
+      .category-collapse-btn {
+        z-index: 5;
+        padding: 8px;
+        margin: -8px;
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      .category-add {
+        z-index: 5;
+        padding: 10px;
+        margin: -10px;
+        margin-left: -6px;
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      .category-delete {
+        z-index: 5;
+        padding: 10px;
+        margin: -10px;
+        margin-left: auto;
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      .category-name {
+        z-index: 4;
+        padding: 10px 6px;
+        margin: -10px -6px;
+      }
+
+      .category-drag-handle {
+        z-index: 0;
+        min-width: 20px;
+        margin-left: 10px;
+        margin-right: 10px;
+        flex: 1 1 0;
+      }
     }
 
     .category-delete:disabled:hover {
@@ -1273,11 +1327,23 @@
 
     function bindCategoryHeaderControl(el, handler) {
       if (!el) return;
+      let touchHandledAt = 0;
       const run = (event) => {
         event.stopPropagation();
         handler(event);
       };
-      el.addEventListener('click', run, true);
+      el.addEventListener('pointerup', (event) => {
+        if (event.pointerType !== 'touch') return;
+        touchHandledAt = Date.now();
+        run(event);
+      }, true);
+      el.addEventListener('click', (event) => {
+        if (Date.now() - touchHandledAt < 450) {
+          event.stopPropagation();
+          return;
+        }
+        run(event);
+      }, true);
     }
 
     function openConfirmDelete(onConfirm, copyKey = 'default') {
