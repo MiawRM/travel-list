@@ -1303,10 +1303,28 @@
 
     function bindCategoryHeaderControl(el, handler) {
       if (!el) return;
-      el.addEventListener('click', (event) => {
+      let lastInvokeAt = 0;
+      const invoke = (event) => {
         event.stopPropagation();
+        const now = Date.now();
+        if (now - lastInvokeAt < 400) return;
+        lastInvokeAt = now;
         handler(event);
-      }, true);
+      };
+      const isolateFromSortable = (event) => {
+        event.stopPropagation();
+      };
+      el.addEventListener('touchstart', isolateFromSortable, { capture: true, passive: true });
+      el.addEventListener('pointerdown', isolateFromSortable, { capture: true });
+      el.addEventListener('touchend', (event) => {
+        event.preventDefault();
+        invoke(event);
+      }, { passive: false });
+      el.addEventListener('pointerup', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        invoke(event);
+      });
+      el.addEventListener('click', invoke);
     }
 
     function openConfirmDelete(onConfirm, copyKey = 'default') {
@@ -1458,7 +1476,7 @@
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
-        preventOnFilter: true,
+        preventOnFilter: false,
         onEnd(evt) {
           if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
             persistCategoryOrderFromDom();
