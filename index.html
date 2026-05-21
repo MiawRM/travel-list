@@ -204,6 +204,7 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 15px;
+      pointer-events: none;
     }
 
     .checklist-category-card .category-card-header .category-name {
@@ -217,6 +218,9 @@
       flex: 0 0 auto;
       max-width: calc(100% - 72px);
       min-width: 0;
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
     }
 
     .category-collapse-btn {
@@ -279,13 +283,16 @@
 
     .category-drag-handle {
       position: relative;
-      flex: 1 1 auto;
-      min-width: 20px;
+      z-index: 1;
+      flex: 1 1 0;
+      min-width: 24px;
       height: 28px;
       align-self: stretch;
+      margin: 0 4px;
       border-radius: 4px;
       background: transparent;
       cursor: grab;
+      pointer-events: auto;
       touch-action: none;
       -webkit-tap-highlight-color: transparent;
       -webkit-touch-callout: none;
@@ -360,6 +367,8 @@
 
     .category-delete {
       position: relative;
+      z-index: 2;
+      pointer-events: auto;
       width: 28px;
       height: 28px;
       margin-left: auto;
@@ -1008,7 +1017,6 @@
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
-    let suppressCategoryHeaderClick = false;
     let categorySortable = null;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
@@ -1265,11 +1273,11 @@
 
     function bindCategoryHeaderControl(el, handler) {
       if (!el) return;
-      el.addEventListener('click', (event) => {
-        if (suppressCategoryHeaderClick) return;
+      const run = (event) => {
         event.stopPropagation();
         handler(event);
-      });
+      };
+      el.addEventListener('click', run, true);
     }
 
     function openConfirmDelete(onConfirm, copyKey = 'default') {
@@ -1415,23 +1423,17 @@
         draggable: '.checklist-category-card',
         handle: '.category-drag-handle',
         delay: 500,
-        delayOnTouchOnly: false,
+        delayOnTouchOnly: true,
         touchStartThreshold: 12,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
-        filter: '.category-collapse-btn, .category-name, .category-add, .category-delete',
+        filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
         preventOnFilter: true,
-        onStart() {
-          suppressCategoryHeaderClick = true;
-        },
         onEnd(evt) {
           if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
             persistCategoryOrderFromDom();
           }
-          window.setTimeout(() => {
-            suppressCategoryHeaderClick = false;
-          }, 400);
         }
       });
     }
