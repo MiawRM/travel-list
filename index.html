@@ -24,10 +24,20 @@
       cursor: pointer;
       user-select: none;
       -webkit-touch-callout: none;
+      transition: color 0.2s ease;
+    }
+
+    .title.trip-title-placeholder {
+      color: #94b8d8;
+      font-weight: 600;
     }
 
     .title:hover {
       color: #2563eb;
+    }
+
+    .title.trip-title-placeholder:hover {
+      color: #60a5fa;
     }
 
     .members-title {
@@ -749,7 +759,7 @@
 
 <body>
 
-  <div class="title" id="tripTitle" role="button" tabindex="0" title="点击编辑旅行名称">克罗地亚之旅</div>
+  <div class="title trip-title-placeholder" id="tripTitle" role="button" tabindex="0" title="点击编辑旅行名称">给你的旅行取个名字吧～</div>
 
   <div class="card">
     <div class="members-title" id="membersSectionTitle" role="button" tabindex="0" title="点击编辑">我们</div>
@@ -833,7 +843,7 @@
     <div class="modal">
       <h3>编辑旅行名称</h3>
       <label for="editTripTitleInput">旅行名称</label>
-      <input id="editTripTitleInput" type="text" placeholder="例如：日本旅行" maxlength="32" />
+      <input id="editTripTitleInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
       <div class="modal-actions">
         <button type="button" class="modal-btn cancel" id="cancelEditTripTitleBtn">取消</button>
         <button type="button" class="modal-btn confirm" id="saveEditTripTitleBtn">保存</button>
@@ -993,28 +1003,42 @@
     const CATEGORIES_STORAGE_KEY = 'travel-checklist-categories-v1';
     const CATEGORY_COLLAPSE_STORAGE_KEY = 'travel-checklist-category-collapse-v1';
     const TRIP_TITLE_STORAGE_KEY = 'travel-checklist-trip-title-v1';
-    const DEFAULT_TRIP_TITLE = '克罗地亚之旅';
+    const TRIP_TITLE_PLACEHOLDER = '给你的旅行取个名字吧～';
+    const LEGACY_DEFAULT_TRIP_TITLES = ['克罗地亚之旅'];
     const MEMBERS_SECTION_TITLE_STORAGE_KEY = 'travel-checklist-members-section-title-v1';
     const DEFAULT_MEMBERS_SECTION_TITLE = '我们';
 
-    const DEFAULT_CATEGORY_ORDER = ['海边装备', '药品', '衣物'];
+    const DEFAULT_CATEGORY_ORDER = [
+      '证件',
+      '衣物',
+      '洗漱 / 化妆',
+      '药品',
+      '电子设备',
+      '爬山装备',
+      '玩水装备'
+    ];
     const CATEGORY_ICONS = {
-      '海边装备': '🌊',
+      '证件': '🪪',
+      '衣物': '👕',
+      '洗漱 / 化妆': '🪥',
       '药品': '💊',
-      '衣物': '👕'
+      '电子设备': '🔌',
+      '爬山装备': '⛰️',
+      '玩水装备': '🌊'
     };
 
     const CATEGORY_ICON_KEYWORD_RULES = [
-      { keys: ['海边', '浮潜', '沙滩', '潜水', '游泳'], icon: '🌊' },
+      { keys: ['证件', '护照', '签证', '身份', '驾照'], icon: '🪪' },
+      { keys: ['衣物', '穿搭', '服装', '衣服', '鞋', '内衣'], icon: '👕' },
+      { keys: ['洗漱', '化妆', '卫浴', '护理', '牙刷', '护肤'], icon: '🪥' },
       { keys: ['药品', '医疗', '药', '急救'], icon: '💊' },
-      { keys: ['衣物', '穿搭', '服装', '衣服', '鞋'], icon: '👕' },
       { keys: ['电子', '设备', '数码', '充电', '插头'], icon: '🔌' },
+      { keys: ['爬山', '登山', '户外'], icon: '⛰️' },
+      { keys: ['海边', '浮潜', '沙滩', '潜水', '游泳', '玩水'], icon: '🌊' },
       { keys: ['工具', '五金'], icon: '🧰' },
-      { keys: ['证件', '护照', '签证', '身份'], icon: '🪪' },
       { keys: ['宝宝', '婴儿', '儿童', '小孩'], icon: '🧸' },
       { keys: ['食物', '食品', '零食', '餐饮'], icon: '🍜' },
-      { keys: ['洗漱', '卫浴', '护理', '牙刷'], icon: '🪥' },
-      { keys: ['露营', '帐篷', '户外'], icon: '⛺' }
+      { keys: ['露营', '帐篷'], icon: '⛺' }
     ];
 
     function iconForCategoryName(name) {
@@ -1039,7 +1063,7 @@
     let checklistItems = [];
     let members = [];
     let categories = [];
-    let tripTitle = DEFAULT_TRIP_TITLE;
+    let tripTitle = '';
     let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
     let collapsedCategories = {};
     let editingItemId = null;
@@ -1092,37 +1116,50 @@
       localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(members));
     }
 
+    function isTripTitleUnset() {
+      return !String(tripTitle || '').trim();
+    }
+
+    function isLegacyDefaultTripTitle(name) {
+      return LEGACY_DEFAULT_TRIP_TITLES.includes(String(name || '').trim());
+    }
+
+    function getDisplayTripTitle() {
+      return isTripTitleUnset() ? TRIP_TITLE_PLACEHOLDER : tripTitle.trim();
+    }
+
     function saveTripTitle() {
-      localStorage.setItem(TRIP_TITLE_STORAGE_KEY, tripTitle);
+      localStorage.setItem(TRIP_TITLE_STORAGE_KEY, tripTitle.trim());
     }
 
     function loadTripTitle() {
       try {
         const raw = localStorage.getItem(TRIP_TITLE_STORAGE_KEY);
-        if (raw) {
+        if (raw !== null && raw !== undefined) {
           const name = String(raw).trim();
-          if (name) {
+          if (name && !isLegacyDefaultTripTitle(name) && name !== TRIP_TITLE_PLACEHOLDER) {
             tripTitle = name;
             return;
           }
         }
       } catch (e) {
-        tripTitle = DEFAULT_TRIP_TITLE;
+        tripTitle = '';
       }
-      tripTitle = DEFAULT_TRIP_TITLE;
-      saveTripTitle();
+      tripTitle = '';
     }
 
     function renderTripTitle() {
-      tripTitleEl.textContent = tripTitle;
-      document.title = tripTitle;
+      const unset = isTripTitleUnset();
+      tripTitleEl.textContent = getDisplayTripTitle();
+      tripTitleEl.classList.toggle('trip-title-placeholder', unset);
+      document.title = unset ? '旅行清单' : tripTitle.trim();
     }
 
     function openEditTripTitleModal() {
-      editTripTitleInput.value = tripTitle;
+      editTripTitleInput.value = isTripTitleUnset() ? '' : tripTitle.trim();
       editTripTitleModal.classList.add('show');
       editTripTitleInput.focus();
-      editTripTitleInput.select();
+      if (!isTripTitleUnset()) editTripTitleInput.select();
     }
 
     function closeEditTripTitleModal() {
@@ -1131,12 +1168,9 @@
 
     function saveEditedTripTitle() {
       const nextTitle = editTripTitleInput.value.trim();
-      if (!nextTitle) {
-        editTripTitleInput.focus();
-        return;
-      }
-      if (nextTitle !== tripTitle) {
-        tripTitle = nextTitle;
+      const normalized = nextTitle && nextTitle !== TRIP_TITLE_PLACEHOLDER ? nextTitle : '';
+      if (normalized !== tripTitle) {
+        tripTitle = normalized;
         saveTripTitle();
         renderTripTitle();
       }
@@ -1533,12 +1567,49 @@
       return changed;
     }
 
+    function makeSeedItem(name, category) {
+      return {
+        id: createId(),
+        name,
+        category,
+        owners: [],
+        completedOwners: [],
+        completed: false
+      };
+    }
+
     function getDefaultSeedItems() {
-      return [
-        { id: createId(), name: '防晒霜', category: '海边装备', owners: [], completedOwners: [], completed: false },
-        { id: createId(), name: '浮潜面罩', category: '海边装备', owners: [], completedOwners: [], completed: false },
-        { id: createId(), name: '晕船药', category: '药品', owners: [], completedOwners: [], completed: false }
-      ];
+      const items = [];
+      const add = (category, names) => {
+        names.forEach(name => items.push(makeSeedItem(name, category)));
+      };
+      add('证件', [
+        '护照', '身份证', '办理签证', '居留卡', '(国际)驾照', '信用卡', '银行卡', '医保卡'
+      ]);
+      add('衣物', [
+        '内衣裤 × 5', '睡衣', '防晒衣', 'T-shirt × 5', '袜子 × 5', '运动鞋', '拖鞋',
+        '高跟鞋', '遮阳帽', '太阳镜', '饰品', '手表', '发饰', '头绳'
+      ]);
+      add('洗漱 / 化妆', [
+        '牙刷', '牙膏', '牙线', '漱口水', '洗发水', '护发素', '身体乳', '防晒',
+        '止汗露', '指甲油', '护肤品', '面膜', '唇膏', '口红', '护手霜',
+        '刮毛刀', '指甲刀', '卫生护理'
+      ]);
+      add('药品', [
+        '伤口喷雾', '退烧药', '感冒药', '止泻药', '止痛药', '脱敏药',
+        '创口贴', '驱蚊虫喷雾', '维他命'
+      ]);
+      add('电子设备', [
+        '手机充电器', '充电宝', '转换插头', '手表充电器', '牙刷充电器',
+        'iPad', '相机', '便携式音响'
+      ]);
+      add('爬山装备', [
+        '登山鞋', '防晒帽', '运动袜', '冲锋衣', '水壶', '能量棒', '登山杖', '小背包'
+      ]);
+      add('玩水装备', [
+        '泳圈', '浮潜镜', '防水袋', '防水手机套', '沙滩巾', '水枪', '游泳镜', '拖鞋'
+      ]);
+      return items;
     }
 
     function loadMembers() {
@@ -1560,7 +1631,7 @@
       } catch (e) {
         members = [];
       }
-      members = ['我', '小李', '小王'].map(name => ({ id: createId(), name }));
+      members = ['我', '小A', '小B'].map(name => ({ id: createId(), name }));
       saveMembers();
     }
 
