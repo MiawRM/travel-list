@@ -212,9 +212,9 @@
     .checklist-category-card .category-card-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 15px;
-      pointer-events: none;
     }
 
     .checklist-category-card .category-card-header .category-name {
@@ -222,21 +222,21 @@
     }
 
     .category-header-start {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
-      flex: 0 0 auto;
-      max-width: calc(100% - 72px);
+      flex: 0 1 auto;
       min-width: 0;
-      position: relative;
-      z-index: 2;
-      pointer-events: none;
+      cursor: grab;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    .category-header-start .category-collapse-btn,
-    .category-header-start .category-name,
-    .category-header-start .category-add {
-      pointer-events: auto;
+    .category-header-start:active,
+    .checklist-category-card.category-sortable-chosen .category-header-start {
+      cursor: grabbing;
     }
 
     .category-collapse-btn {
@@ -287,37 +287,6 @@
 
     .category-name:hover {
       color: #2563eb;
-    }
-
-    .category-drag-handle {
-      position: relative;
-      z-index: 0;
-      flex: 1 1 0;
-      min-width: 24px;
-      height: 32px;
-      align-self: center;
-      margin: 0 6px;
-      border-radius: 4px;
-      background: transparent;
-      cursor: grab;
-      pointer-events: auto;
-      touch-action: none;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .category-drag-handle:active,
-    .checklist-category-card.category-sortable-chosen .category-drag-handle {
-      cursor: grabbing;
-    }
-
-    .checklist-category-card.category-sortable-chosen .category-collapse-btn,
-    .checklist-category-card.category-sortable-chosen .category-name,
-    .checklist-category-card.category-sortable-chosen .category-add,
-    .checklist-category-card.category-sortable-chosen .category-delete {
-      cursor: pointer;
     }
 
     .checklist-category-card.category-sortable-ghost {
@@ -377,7 +346,6 @@
       height: 34px;
       padding: 3px;
       margin: 0;
-      margin-left: auto;
       border: none;
       border-radius: 50%;
       background: #fee2e2;
@@ -429,12 +397,6 @@
         padding: 3px;
       }
 
-      .category-drag-handle {
-        min-width: 16px;
-        margin-left: 8px;
-        margin-right: 8px;
-        height: 32px;
-      }
     }
 
     .category-delete:disabled:hover {
@@ -1072,6 +1034,7 @@
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
     let categorySortable = null;
+    let suppressCategoryToggleClick = false;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
     let memberPressStart = null;
@@ -1335,32 +1298,6 @@
       if (card) applyCategoryCollapseState(card, cat);
     }
 
-    function bindCategoryHeaderControl(el, handler) {
-      if (!el) return;
-      let lastInvokeAt = 0;
-      const invoke = (event) => {
-        event.stopPropagation();
-        const now = Date.now();
-        if (now - lastInvokeAt < 400) return;
-        lastInvokeAt = now;
-        handler(event);
-      };
-      const isolateFromSortable = (event) => {
-        event.stopPropagation();
-      };
-      el.addEventListener('touchstart', isolateFromSortable, { capture: true, passive: true });
-      el.addEventListener('pointerdown', isolateFromSortable, { capture: true });
-      el.addEventListener('touchend', (event) => {
-        event.preventDefault();
-        invoke(event);
-      }, { passive: false });
-      el.addEventListener('pointerup', (event) => {
-        if (event.pointerType === 'mouse' && event.button !== 0) return;
-        invoke(event);
-      });
-      el.addEventListener('click', invoke);
-    }
-
     function openConfirmDelete(onConfirm, copyKey = 'default') {
       const copy = DELETE_COPY[copyKey] || DELETE_COPY.default;
       confirmDeleteTitle.textContent = copy.title;
@@ -1451,25 +1388,13 @@
         delBtn.setAttribute('aria-label', '删除分类');
         delBtn.textContent = '×';
         delBtn.disabled = categories.length <= 1;
-        const dragHandle = document.createElement('div');
-        dragHandle.className = 'category-drag-handle';
-        dragHandle.setAttribute('aria-hidden', 'true');
-        dragHandle.title = '长按拖动排序';
         const headerStart = document.createElement('div');
         headerStart.className = 'category-header-start';
         headerStart.appendChild(collapseBtn);
         headerStart.appendChild(nameSpan);
         headerStart.appendChild(addItemBtn);
         header.appendChild(headerStart);
-        header.appendChild(dragHandle);
         header.appendChild(delBtn);
-
-        bindCategoryHeaderControl(collapseBtn, () => toggleCategoryCollapse(cat));
-        bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
-        bindCategoryHeaderControl(nameSpan, () => openEditCategoryModal(cat));
-        bindCategoryHeaderControl(delBtn, () => {
-          openConfirmDelete(() => removeCategoryByName(cat));
-        });
         card.appendChild(header);
         applyCategoryCollapseState(card, cat);
 
@@ -1502,19 +1427,28 @@
       categorySortable = Sortable.create(categoriesContainer, {
         animation: 150,
         draggable: '.checklist-category-card',
-        handle: '.category-drag-handle',
-        delay: 500,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 12,
+        handle: '.category-header-start',
+        delay: 450,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 6,
         forceFallback: true,
         fallbackTolerance: 4,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
-        filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
+        filter: '.category-add, .category-delete, .category-collapse-btn',
         preventOnFilter: true,
-        onUpdate() {
-          persistCategoryOrderFromDom();
+        onStart() {
+          suppressCategoryToggleClick = false;
+        },
+        onEnd(evt) {
+          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
+            suppressCategoryToggleClick = true;
+            persistCategoryOrderFromDom();
+          }
+          window.setTimeout(() => {
+            suppressCategoryToggleClick = false;
+          }, 320);
         }
       });
     }
@@ -2077,6 +2011,38 @@
     });
     categoryModal.addEventListener('click', (event) => {
       if (event.target === categoryModal) closeCategoryModal();
+    });
+
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const nameEl = event.target.closest('.category-name');
+      if (!nameEl) return;
+      const cat = nameEl.dataset.categoryName;
+      if (!cat) return;
+      openEditCategoryModal(cat);
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const addBtn = event.target.closest('.category-add');
+      if (addBtn) {
+        event.preventDefault();
+        openModal(addBtn.dataset.categoryName);
+        return;
+      }
+      const btn = event.target.closest('.category-delete');
+      if (!btn) return;
+      event.preventDefault();
+      const catName = btn.dataset.categoryName;
+      openConfirmDelete(() => removeCategoryByName(catName));
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const collapseBtn = event.target.closest('.category-collapse-btn');
+      if (!collapseBtn) return;
+      if (suppressCategoryToggleClick) return;
+      const cat = collapseBtn.dataset.categoryName;
+      if (!cat) return;
+      toggleCategoryCollapse(cat);
     });
 
     categoriesContainer.addEventListener('keydown', (event) => {
