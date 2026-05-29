@@ -1506,15 +1506,15 @@
         delay: 500,
         delayOnTouchOnly: true,
         touchStartThreshold: 12,
+        forceFallback: true,
+        fallbackTolerance: 4,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
-        preventOnFilter: false,
-        onEnd(evt) {
-          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
-            persistCategoryOrderFromDom();
-          }
+        preventOnFilter: true,
+        onUpdate() {
+          persistCategoryOrderFromDom();
         }
       });
     }
