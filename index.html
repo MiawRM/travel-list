@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-panel+dom</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-trace</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1112,6 +1112,8 @@
     let pendingDeleteAction = null;
     let categorySortable = null;
     let lastCategoryDragRelatedIndex = null;
+    let categoryDragTraceSession = null;
+    const CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX = 5;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
     let memberPressStart = null;
@@ -1572,24 +1574,104 @@
       console.log('[category-drag]', JSON.stringify(payload));
     }
 
+    function resetCategoryDragTrace() {
+      categoryDragTraceSession = {
+        onStart: null,
+        moveHead: [],
+        moveTail: null,
+        moveCount: 0
+      };
+    }
+
+    function snapshotCategoryDragEvent(phase, evt) {
+      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+      let relatedIndex = null;
+      let relatedName = null;
+      if (evt && evt.related) {
+        relatedIndex = cards.indexOf(evt.related);
+        relatedName = evt.related.dataset ? evt.related.dataset.categoryName : null;
+      }
+      const dragged = evt && evt.item && evt.item.dataset
+        ? evt.item.dataset.categoryName
+        : null;
+      return {
+        phase,
+        oldIndex: evt && evt.oldIndex !== undefined ? evt.oldIndex : null,
+        newIndex: evt && evt.newIndex !== undefined ? evt.newIndex : null,
+        relatedIndex,
+        relatedName,
+        willInsertAfter: phase === 'onMove' && evt ? evt.willInsertAfter : null,
+        dragged
+      };
+    }
+
+    function formatCategoryDragTraceLine(label, snap) {
+      if (!snap) return `${label}: —`;
+      const parts = [];
+      if (snap.oldIndex != null) parts.push(`oldIndex=${snap.oldIndex}`);
+      if (snap.newIndex != null) parts.push(`newIndex=${snap.newIndex}`);
+      parts.push(`relatedIndex=${snap.relatedIndex != null ? snap.relatedIndex : '—'}`);
+      if (snap.relatedName) parts.push(`related=${snap.relatedName}`);
+      if (snap.willInsertAfter != null) {
+        parts.push(`after=${snap.willInsertAfter ? 1 : 0}`);
+      }
+      if (snap.dragged) parts.push(`dragged=${snap.dragged}`);
+      return `${label}: ${parts.join(' ')}`;
+    }
+
+    function recordCategoryDragMove(evt) {
+      if (!categoryDragTraceSession) resetCategoryDragTrace();
+      const snap = snapshotCategoryDragEvent('onMove', evt);
+      categoryDragTraceSession.moveCount += 1;
+      if (categoryDragTraceSession.moveHead.length < CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX) {
+        categoryDragTraceSession.moveHead.push(snap);
+      }
+      categoryDragTraceSession.moveTail = snap;
+    }
+
     function showCategoryDragDebugOnPage(evt) {
       const el = document.getElementById('categoryDragDebugText');
       if (!el || !evt) return;
       const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
       const domNames = cards.map(card => card.dataset.categoryName || '—');
-      const dragged = evt.item && evt.item.dataset ? evt.item.dataset.categoryName : '—';
-      const related = lastCategoryDragRelatedIndex != null ? String(lastCategoryDragRelatedIndex) : '—';
-      el.textContent = [
-        `oldIndex=${evt.oldIndex}`,
-        `newIndex=${evt.newIndex}`,
-        `relatedIndex=${related}`,
-        `dragged=${dragged}`,
-        '',
-        `cardCount=${cards.length}`,
-        '',
-        'domOrder=',
-        ...domNames
-      ].join('\n');
+      const lines = ['Debug:', ''];
+
+      const session = categoryDragTraceSession;
+      if (session) {
+        lines.push('--- drag trace ---');
+        lines.push(formatCategoryDragTraceLine('onStart', session.onStart));
+        lines.push('');
+        const totalMoves = session.moveCount;
+        if (!totalMoves) {
+          lines.push('onMove: (none)');
+        } else if (totalMoves <= CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX) {
+          session.moveHead.forEach((snap, index) => {
+            lines.push(formatCategoryDragTraceLine(`onMove#${index + 1}`, snap));
+          });
+        } else {
+          session.moveHead.forEach((snap, index) => {
+            lines.push(formatCategoryDragTraceLine(`onMove#${index + 1}`, snap));
+          });
+          lines.push('…');
+          lines.push(formatCategoryDragTraceLine(`last onMove (#${totalMoves})`, session.moveTail));
+        }
+        lines.push('');
+        lines.push(formatCategoryDragTraceLine('onEnd', session.onEnd || snapshotCategoryDragEvent('onEnd', evt)));
+        lines.push('');
+      }
+
+      lines.push('--- result ---');
+      lines.push(`oldIndex=${evt.oldIndex}`);
+      lines.push(`newIndex=${evt.newIndex}`);
+      lines.push(`relatedIndex=${lastCategoryDragRelatedIndex != null ? lastCategoryDragRelatedIndex : '—'}`);
+      lines.push(`dragged=${evt.item && evt.item.dataset ? evt.item.dataset.categoryName : '—'}`);
+      lines.push('');
+      lines.push(`cardCount=${cards.length}`);
+      lines.push('');
+      lines.push('domOrder=');
+      lines.push(...domNames);
+
+      el.textContent = lines.join('\n');
     }
 
     function initCategorySortable() {
@@ -1613,6 +1695,8 @@
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
         preventOnFilter: false,
         onStart(evt) {
+          resetCategoryDragTrace();
+          categoryDragTraceSession.onStart = snapshotCategoryDragEvent('onStart', evt);
           lastCategoryDragRelatedIndex = null;
           logCategoryDragEvent('onStart', evt);
         },
@@ -1621,12 +1705,14 @@
             const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
             lastCategoryDragRelatedIndex = cards.indexOf(evt.related);
           }
+          recordCategoryDragMove(evt);
           logCategoryDragEvent('onMove', evt);
         },
         onChange(evt) {
           logCategoryDragEvent('onChange', evt);
         },
         onEnd(evt) {
+          categoryDragTraceSession.onEnd = snapshotCategoryDragEvent('onEnd', evt);
           showCategoryDragDebugOnPage(evt);
           logCategoryDragEvent('onEnd', evt);
           if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
