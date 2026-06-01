@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-panel</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-panel+dom</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1575,13 +1575,20 @@
     function showCategoryDragDebugOnPage(evt) {
       const el = document.getElementById('categoryDragDebugText');
       if (!el || !evt) return;
+      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+      const domNames = cards.map(card => card.dataset.categoryName || '—');
       const dragged = evt.item && evt.item.dataset ? evt.item.dataset.categoryName : '—';
       const related = lastCategoryDragRelatedIndex != null ? String(lastCategoryDragRelatedIndex) : '—';
       el.textContent = [
         `oldIndex=${evt.oldIndex}`,
         `newIndex=${evt.newIndex}`,
         `relatedIndex=${related}`,
-        `dragged=${dragged}`
+        `dragged=${dragged}`,
+        '',
+        `cardCount=${cards.length}`,
+        '',
+        'domOrder=',
+        ...domNames
       ].join('\n');
     }
 
