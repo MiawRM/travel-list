@@ -332,22 +332,6 @@
       opacity: 0.96;
     }
 
-    .checklist-category-card.sortable-fallback {
-      opacity: 1 !important;
-      z-index: 10000 !important;
-      box-sizing: border-box !important;
-      margin: 0 !important;
-      background: #ffffff !important;
-      border-radius: 24px !important;
-      box-shadow: 0 16px 40px rgba(59, 130, 246, 0.22) !important;
-      pointer-events: none !important;
-      cursor: grabbing !important;
-    }
-
-    .checklist-category-card.category-sortable-chosen:not(.sortable-fallback) {
-      opacity: 0.35;
-    }
-
     .category-add {
       position: relative;
       z-index: 3;
@@ -800,7 +784,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 02</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01</p>
 
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
@@ -1519,15 +1503,6 @@
       syncCategorySelect(categorySelect.value);
     }
 
-    function fixCategoryDragCloneSize(sourceEl) {
-      const fb = document.body.querySelector('.checklist-category-card.sortable-fallback');
-      if (!fb || !sourceEl) return;
-      const rect = sourceEl.getBoundingClientRect();
-      fb.style.width = `${rect.width}px`;
-      fb.style.maxWidth = `${rect.width}px`;
-      fb.style.boxSizing = 'border-box';
-    }
-
     function initCategorySortable() {
       if (typeof Sortable === 'undefined') return;
       if (categorySortable) {
@@ -1543,20 +1518,15 @@
         delay: 500,
         delayOnTouchOnly: true,
         touchStartThreshold: 12,
-        forceFallback: true,
-        fallbackOnBody: true,
-        fallbackTolerance: 0,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
-        preventOnFilter: true,
-        onStart(evt) {
-          fixCategoryDragCloneSize(evt.item);
-          requestAnimationFrame(() => fixCategoryDragCloneSize(evt.item));
-        },
-        onEnd() {
-          persistCategoryOrderFromDom();
+        preventOnFilter: false,
+        onEnd(evt) {
+          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
+            persistCategoryOrderFromDom();
+          }
         }
       });
     }
