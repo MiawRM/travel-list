@@ -764,6 +764,28 @@
       letter-spacing: 0.02em;
       user-select: none;
     }
+
+    .category-drag-debug {
+      margin: 8px 0 16px;
+      padding: 10px 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #64748b;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    .category-drag-debug-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #475569;
+    }
   </style>
 </head>
 
@@ -784,7 +806,12 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-panel</p>
+
+  <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
+    <div class="category-drag-debug-title">Debug:</div>
+    <pre id="categoryDragDebugText">—</pre>
+  </div>
 
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
@@ -1084,6 +1111,7 @@
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
     let categorySortable = null;
+    let lastCategoryDragRelatedIndex = null;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
     let memberPressStart = null;
@@ -1503,6 +1531,60 @@
       syncCategorySelect(categorySelect.value);
     }
 
+    function getCategoryDragDomSnapshot() {
+      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+      const ghost = categoriesContainer.querySelector('.category-sortable-ghost');
+      const chosen = categoriesContainer.querySelector('.category-sortable-chosen');
+      const fallback = document.body.querySelector('.checklist-category-card.sortable-fallback');
+      return {
+        domOrder: cards.map((card, index) => ({
+          index,
+          name: card.dataset.categoryName || ''
+        })),
+        ghostDomIndex: ghost ? cards.indexOf(ghost) : null,
+        chosenDomIndex: chosen ? cards.indexOf(chosen) : null,
+        hasFallbackClone: !!fallback,
+        fallbackCategory: fallback ? (fallback.dataset.categoryName || null) : null
+      };
+    }
+
+    function logCategoryDragEvent(phase, evt) {
+      const payload = {
+        phase,
+        oldIndex: evt != null && evt.oldIndex !== undefined ? evt.oldIndex : null,
+        newIndex: evt != null && evt.newIndex !== undefined ? evt.newIndex : null,
+        ts: Date.now()
+      };
+      if (evt) {
+        if (evt.item && evt.item.dataset) {
+          payload.draggedCategory = evt.item.dataset.categoryName || null;
+        }
+        if (phase === 'onMove') {
+          payload.willInsertAfter = evt.willInsertAfter;
+          payload.relatedCategory = evt.related && evt.related.dataset
+            ? evt.related.dataset.categoryName
+            : null;
+          const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+          payload.relatedDomIndex = evt.related ? cards.indexOf(evt.related) : null;
+        }
+      }
+      payload.dom = getCategoryDragDomSnapshot();
+      console.log('[category-drag]', JSON.stringify(payload));
+    }
+
+    function showCategoryDragDebugOnPage(evt) {
+      const el = document.getElementById('categoryDragDebugText');
+      if (!el || !evt) return;
+      const dragged = evt.item && evt.item.dataset ? evt.item.dataset.categoryName : '—';
+      const related = lastCategoryDragRelatedIndex != null ? String(lastCategoryDragRelatedIndex) : '—';
+      el.textContent = [
+        `oldIndex=${evt.oldIndex}`,
+        `newIndex=${evt.newIndex}`,
+        `relatedIndex=${related}`,
+        `dragged=${dragged}`
+      ].join('\n');
+    }
+
     function initCategorySortable() {
       if (typeof Sortable === 'undefined') return;
       if (categorySortable) {
@@ -1523,10 +1605,31 @@
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
         preventOnFilter: false,
+        onStart(evt) {
+          lastCategoryDragRelatedIndex = null;
+          logCategoryDragEvent('onStart', evt);
+        },
+        onMove(evt) {
+          if (evt && evt.related) {
+            const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+            lastCategoryDragRelatedIndex = cards.indexOf(evt.related);
+          }
+          logCategoryDragEvent('onMove', evt);
+        },
+        onChange(evt) {
+          logCategoryDragEvent('onChange', evt);
+        },
         onEnd(evt) {
+          showCategoryDragDebugOnPage(evt);
+          logCategoryDragEvent('onEnd', evt);
           if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
             persistCategoryOrderFromDom();
           }
+          logCategoryDragEvent('onEnd:afterPersist', {
+            oldIndex: evt.oldIndex,
+            newIndex: evt.newIndex,
+            item: evt.item
+          });
         }
       });
     }
