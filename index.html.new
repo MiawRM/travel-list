@@ -754,16 +754,6 @@
       border-color: #93c5fd;
       color: #3b82f6;
     }
-
-    .build-version-marker {
-      margin: 12px 0 8px;
-      text-align: center;
-      font-size: 11px;
-      font-weight: 400;
-      color: #94a3b8;
-      letter-spacing: 0.02em;
-      user-select: none;
-    }
   </style>
 </head>
 
@@ -783,8 +773,6 @@
   </div>
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
-
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01</p>
 
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
@@ -1518,15 +1506,15 @@
         delay: 500,
         delayOnTouchOnly: true,
         touchStartThreshold: 12,
+        forceFallback: true,
+        fallbackTolerance: 4,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
-        preventOnFilter: false,
-        onEnd(evt) {
-          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
-            persistCategoryOrderFromDom();
-          }
+        preventOnFilter: true,
+        onUpdate() {
+          persistCategoryOrderFromDom();
         }
       });
     }
