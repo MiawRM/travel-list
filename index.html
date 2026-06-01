@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 01 · drag-trace</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1674,6 +1674,10 @@
       el.textContent = lines.join('\n');
     }
 
+    function categoryDragUseTouchFallback() {
+      return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    }
+
     function initCategorySortable() {
       if (typeof Sortable === 'undefined') return;
       if (categorySortable) {
@@ -1681,6 +1685,8 @@
         categorySortable = null;
       }
       if (categories.length < 2) return;
+
+      const touchFallback = categoryDragUseTouchFallback();
 
       categorySortable = Sortable.create(categoriesContainer, {
         animation: 150,
@@ -1694,6 +1700,11 @@
         dragClass: 'category-sortable-drag',
         filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
         preventOnFilter: false,
+        ...(touchFallback ? {
+          forceFallback: true,
+          fallbackOnBody: true,
+          fallbackTolerance: 4
+        } : {}),
         onStart(evt) {
           resetCategoryDragTrace();
           categoryDragTraceSession.onStart = snapshotCategoryDragEvent('onStart', evt);
