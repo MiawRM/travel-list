@@ -308,28 +308,8 @@
       user-select: none;
     }
 
-    .category-drag-handle:active,
-    .checklist-category-card.category-sortable-chosen .category-drag-handle {
+    .category-drag-handle:active {
       cursor: grabbing;
-    }
-
-    .checklist-category-card.category-sortable-chosen .category-collapse-btn,
-    .checklist-category-card.category-sortable-chosen .category-name,
-    .checklist-category-card.category-sortable-chosen .category-add,
-    .checklist-category-card.category-sortable-chosen .category-delete {
-      cursor: pointer;
-    }
-
-    .checklist-category-card.category-sortable-ghost {
-      opacity: 0.45;
-    }
-
-    .checklist-category-card.category-sortable-chosen {
-      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.14);
-    }
-
-    .checklist-category-card.category-sortable-drag {
-      opacity: 0.96;
     }
 
     .category-add {
@@ -755,37 +735,6 @@
       color: #3b82f6;
     }
 
-    .build-version-marker {
-      margin: 12px 0 8px;
-      text-align: center;
-      font-size: 11px;
-      font-weight: 400;
-      color: #94a3b8;
-      letter-spacing: 0.02em;
-      user-select: none;
-    }
-
-    .category-drag-debug {
-      margin: 8px 0 16px;
-      padding: 10px 12px;
-      border: 1px dashed #cbd5e1;
-      border-radius: 10px;
-      background: #f8fafc;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 11px;
-      line-height: 1.45;
-      color: #64748b;
-      text-align: left;
-      white-space: pre-wrap;
-      word-break: break-word;
-      user-select: text;
-    }
-
-    .category-drag-debug-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-      color: #475569;
-    }
   </style>
 </head>
 
@@ -805,13 +754,6 @@
   </div>
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
-
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll-b</p>
-
-  <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
-    <div class="category-drag-debug-title">Debug:</div>
-    <pre id="categoryDragDebugText">—</pre>
-  </div>
 
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
@@ -973,7 +915,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script>
     const addButton = document.getElementById('inviteJoinBtn');
     const inviteJoinModal = document.getElementById('inviteJoinModal');
@@ -1110,11 +1051,6 @@
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
-    let categorySortable = null;
-    let lastCategoryDragRelatedIndex = null;
-    let categoryDragTraceSession = null;
-    let categoryDragSavedBodyOverflow = null;
-    const CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX = 5;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
     let memberPressStart = null;
@@ -1378,16 +1314,6 @@
       if (card) applyCategoryCollapseState(card, cat);
     }
 
-    function lockCategoryDragPageScroll() {
-      categoryDragSavedBodyOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-    }
-
-    function unlockCategoryDragPageScroll() {
-      document.body.style.overflow = categoryDragSavedBodyOverflow || '';
-      categoryDragSavedBodyOverflow = null;
-    }
-
     function bindCategoryHeaderControl(el, handler) {
       if (!el) return;
       let lastInvokeAt = 0;
@@ -1398,11 +1324,11 @@
         lastInvokeAt = now;
         handler(event);
       };
-      const isolateFromSortable = (event) => {
+      const stopDragPointerBubble = (event) => {
         event.stopPropagation();
       };
-      el.addEventListener('touchstart', isolateFromSortable, { capture: true, passive: true });
-      el.addEventListener('pointerdown', isolateFromSortable, { capture: true });
+      el.addEventListener('touchstart', stopDragPointerBubble, { capture: true, passive: true });
+      el.addEventListener('pointerdown', stopDragPointerBubble, { capture: true });
       el.addEventListener('touchend', (event) => {
         event.preventDefault();
         invoke(event);
@@ -1528,229 +1454,6 @@
 
         categoriesContainer.appendChild(card);
         categoryCards[cat] = card;
-      });
-      initCategorySortable();
-    }
-
-    function persistCategoryOrderFromDom() {
-      const newOrder = [...categoriesContainer.querySelectorAll('.checklist-category-card')]
-        .map(card => card.dataset.categoryName)
-        .filter(Boolean);
-      if (!newOrder.length || newOrder.length !== categories.length) return;
-      const unchanged = newOrder.every((name, index) => name === categories[index]);
-      if (unchanged) return;
-      categories = newOrder;
-      saveCategories();
-      syncCategorySelect(categorySelect.value);
-    }
-
-    function getCategoryDragDomSnapshot() {
-      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
-      const ghost = categoriesContainer.querySelector('.category-sortable-ghost');
-      const chosen = categoriesContainer.querySelector('.category-sortable-chosen');
-      const fallback = document.body.querySelector('.checklist-category-card.sortable-fallback');
-      return {
-        domOrder: cards.map((card, index) => ({
-          index,
-          name: card.dataset.categoryName || ''
-        })),
-        ghostDomIndex: ghost ? cards.indexOf(ghost) : null,
-        chosenDomIndex: chosen ? cards.indexOf(chosen) : null,
-        hasFallbackClone: !!fallback,
-        fallbackCategory: fallback ? (fallback.dataset.categoryName || null) : null
-      };
-    }
-
-    function logCategoryDragEvent(phase, evt) {
-      const payload = {
-        phase,
-        oldIndex: evt != null && evt.oldIndex !== undefined ? evt.oldIndex : null,
-        newIndex: evt != null && evt.newIndex !== undefined ? evt.newIndex : null,
-        ts: Date.now()
-      };
-      if (evt) {
-        if (evt.item && evt.item.dataset) {
-          payload.draggedCategory = evt.item.dataset.categoryName || null;
-        }
-        if (phase === 'onMove') {
-          payload.willInsertAfter = evt.willInsertAfter;
-          payload.relatedCategory = evt.related && evt.related.dataset
-            ? evt.related.dataset.categoryName
-            : null;
-          const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
-          payload.relatedDomIndex = evt.related ? cards.indexOf(evt.related) : null;
-        }
-      }
-      payload.dom = getCategoryDragDomSnapshot();
-      console.log('[category-drag]', JSON.stringify(payload));
-    }
-
-    function resetCategoryDragTrace() {
-      categoryDragTraceSession = {
-        onStart: null,
-        moveHead: [],
-        moveTail: null,
-        moveCount: 0
-      };
-    }
-
-    function snapshotCategoryDragEvent(phase, evt) {
-      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
-      let relatedIndex = null;
-      let relatedName = null;
-      if (evt && evt.related) {
-        relatedIndex = cards.indexOf(evt.related);
-        relatedName = evt.related.dataset ? evt.related.dataset.categoryName : null;
-      }
-      const dragged = evt && evt.item && evt.item.dataset
-        ? evt.item.dataset.categoryName
-        : null;
-      return {
-        phase,
-        oldIndex: evt && evt.oldIndex !== undefined ? evt.oldIndex : null,
-        newIndex: evt && evt.newIndex !== undefined ? evt.newIndex : null,
-        relatedIndex,
-        relatedName,
-        willInsertAfter: phase === 'onMove' && evt ? evt.willInsertAfter : null,
-        dragged
-      };
-    }
-
-    function formatCategoryDragTraceLine(label, snap) {
-      if (!snap) return `${label}: —`;
-      const parts = [];
-      if (snap.oldIndex != null) parts.push(`oldIndex=${snap.oldIndex}`);
-      if (snap.newIndex != null) parts.push(`newIndex=${snap.newIndex}`);
-      parts.push(`relatedIndex=${snap.relatedIndex != null ? snap.relatedIndex : '—'}`);
-      if (snap.relatedName) parts.push(`related=${snap.relatedName}`);
-      if (snap.willInsertAfter != null) {
-        parts.push(`after=${snap.willInsertAfter ? 1 : 0}`);
-      }
-      if (snap.dragged) parts.push(`dragged=${snap.dragged}`);
-      return `${label}: ${parts.join(' ')}`;
-    }
-
-    function recordCategoryDragMove(evt) {
-      if (!categoryDragTraceSession) resetCategoryDragTrace();
-      const snap = snapshotCategoryDragEvent('onMove', evt);
-      categoryDragTraceSession.moveCount += 1;
-      if (categoryDragTraceSession.moveHead.length < CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX) {
-        categoryDragTraceSession.moveHead.push(snap);
-      }
-      categoryDragTraceSession.moveTail = snap;
-    }
-
-    function showCategoryDragDebugOnPage(evt) {
-      const el = document.getElementById('categoryDragDebugText');
-      if (!el || !evt) return;
-      const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
-      const domNames = cards.map(card => card.dataset.categoryName || '—');
-      const lines = ['Debug:', ''];
-
-      const session = categoryDragTraceSession;
-      if (session) {
-        lines.push('--- drag trace ---');
-        lines.push(formatCategoryDragTraceLine('onStart', session.onStart));
-        lines.push('');
-        const totalMoves = session.moveCount;
-        if (!totalMoves) {
-          lines.push('onMove: (none)');
-        } else if (totalMoves <= CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX) {
-          session.moveHead.forEach((snap, index) => {
-            lines.push(formatCategoryDragTraceLine(`onMove#${index + 1}`, snap));
-          });
-        } else {
-          session.moveHead.forEach((snap, index) => {
-            lines.push(formatCategoryDragTraceLine(`onMove#${index + 1}`, snap));
-          });
-          lines.push('…');
-          lines.push(formatCategoryDragTraceLine(`last onMove (#${totalMoves})`, session.moveTail));
-        }
-        lines.push('');
-        lines.push(formatCategoryDragTraceLine('onEnd', session.onEnd || snapshotCategoryDragEvent('onEnd', evt)));
-        lines.push('');
-      }
-
-      lines.push('--- result ---');
-      lines.push(`oldIndex=${evt.oldIndex}`);
-      lines.push(`newIndex=${evt.newIndex}`);
-      lines.push(`relatedIndex=${lastCategoryDragRelatedIndex != null ? lastCategoryDragRelatedIndex : '—'}`);
-      lines.push(`dragged=${evt.item && evt.item.dataset ? evt.item.dataset.categoryName : '—'}`);
-      lines.push('');
-      lines.push(`cardCount=${cards.length}`);
-      lines.push('');
-      lines.push('domOrder=');
-      lines.push(...domNames);
-
-      el.textContent = lines.join('\n');
-    }
-
-    function categoryDragUseTouchFallback() {
-      return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-    }
-
-    function initCategorySortable() {
-      if (typeof Sortable === 'undefined') return;
-      if (categorySortable) {
-        categorySortable.destroy();
-        categorySortable = null;
-      }
-      if (categories.length < 2) return;
-
-      const touchFallback = categoryDragUseTouchFallback();
-
-      categorySortable = Sortable.create(categoriesContainer, {
-        animation: 150,
-        draggable: '.checklist-category-card',
-        handle: '.category-drag-handle',
-        delay: 500,
-        delayOnTouchOnly: !touchFallback,
-        touchStartThreshold: 12,
-        ghostClass: 'category-sortable-ghost',
-        chosenClass: 'category-sortable-chosen',
-        dragClass: 'category-sortable-drag',
-        filter: '.category-collapse-btn, .category-name, .category-add, .category-delete, .category-header-start',
-        preventOnFilter: false,
-        ...(touchFallback ? {
-          forceFallback: true,
-          fallbackOnBody: true,
-          fallbackTolerance: 4
-        } : {}),
-        onStart(evt) {
-          lockCategoryDragPageScroll();
-          resetCategoryDragTrace();
-          categoryDragTraceSession.onStart = snapshotCategoryDragEvent('onStart', evt);
-          lastCategoryDragRelatedIndex = null;
-          logCategoryDragEvent('onStart', evt);
-        },
-        onMove(evt) {
-          if (evt && evt.related) {
-            const cards = [...categoriesContainer.querySelectorAll('.checklist-category-card')];
-            lastCategoryDragRelatedIndex = cards.indexOf(evt.related);
-          }
-          recordCategoryDragMove(evt);
-          logCategoryDragEvent('onMove', evt);
-        },
-        onChange(evt) {
-          logCategoryDragEvent('onChange', evt);
-        },
-        onEnd(evt) {
-          try {
-            categoryDragTraceSession.onEnd = snapshotCategoryDragEvent('onEnd', evt);
-            showCategoryDragDebugOnPage(evt);
-            logCategoryDragEvent('onEnd', evt);
-            if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
-              persistCategoryOrderFromDom();
-            }
-            logCategoryDragEvent('onEnd:afterPersist', {
-              oldIndex: evt.oldIndex,
-              newIndex: evt.newIndex,
-              item: evt.item
-            });
-          } finally {
-            unlockCategoryDragPageScroll();
-          }
-        }
       });
     }
 
