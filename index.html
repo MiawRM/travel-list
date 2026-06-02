@@ -308,8 +308,43 @@
       user-select: none;
     }
 
-    .category-drag-handle:active {
+    .category-drag-handle:active,
+    .checklist-category-card.category-reorder-active .category-drag-handle {
       cursor: grabbing;
+    }
+
+    #categoriesContainer {
+      position: relative;
+    }
+
+    .category-insert-indicator {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      height: 3px;
+      margin-top: -2px;
+      border-radius: 2px;
+      background: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .checklist-category-card.category-reorder-source {
+      opacity: 0.32;
+    }
+
+    .checklist-category-card.category-reorder-active {
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.14);
+    }
+
+    .category-reorder-float {
+      position: fixed;
+      z-index: 10000;
+      margin: 0;
+      pointer-events: none;
+      box-shadow: 0 16px 40px rgba(59, 130, 246, 0.22);
+      opacity: 0.98;
     }
 
     .category-add {
@@ -1455,7 +1490,278 @@
         categoriesContainer.appendChild(card);
         categoryCards[cat] = card;
       });
+      categoryListReorder.bindHandles();
     }
+
+    const CATEGORY_REORDER_LONG_PRESS_MS = 500;
+    const CATEGORY_REORDER_MOVE_THRESHOLD = 12;
+    const CATEGORY_REORDER_EDGE_ZONE = 56;
+    const CATEGORY_REORDER_SCROLL_STEP = 12;
+
+    const categoryListReorder = (function () {
+      let session = null;
+      let insertIndicator = null;
+      let scrollRaf = null;
+      let savedBodyOverflow = null;
+
+      function getCategoryCards() {
+        return [...categoriesContainer.querySelectorAll('.checklist-category-card')];
+      }
+
+      function findInsertIndex(clientY, sourceCard) {
+        const cards = getCategoryCards();
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          if (card === sourceCard) continue;
+          const rect = card.getBoundingClientRect();
+          if (clientY < rect.top + rect.height / 2) return i;
+        }
+        return cards.length;
+      }
+
+      function updateInsertIndicator(insertIndex) {
+        if (!insertIndicator) return;
+        const cards = getCategoryCards();
+        if (!cards.length) {
+          insertIndicator.hidden = true;
+          return;
+        }
+        let top;
+        if (insertIndex <= 0) {
+          top = cards[0].offsetTop;
+        } else if (insertIndex >= cards.length) {
+          const last = cards[cards.length - 1];
+          top = last.offsetTop + last.offsetHeight;
+        } else {
+          top = cards[insertIndex].offsetTop;
+        }
+        insertIndicator.style.top = `${top}px`;
+        insertIndicator.hidden = false;
+      }
+
+      function lockPageScroll() {
+        savedBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+      }
+
+      function unlockPageScroll() {
+        document.body.style.overflow = savedBodyOverflow || '';
+        savedBodyOverflow = null;
+      }
+
+      function stopEdgeScrollLoop() {
+        if (scrollRaf) {
+          cancelAnimationFrame(scrollRaf);
+          scrollRaf = null;
+        }
+      }
+
+      function edgeScroll(clientY) {
+        if (clientY < CATEGORY_REORDER_EDGE_ZONE) {
+          window.scrollBy(0, -CATEGORY_REORDER_SCROLL_STEP);
+        } else if (clientY > window.innerHeight - CATEGORY_REORDER_EDGE_ZONE) {
+          window.scrollBy(0, CATEGORY_REORDER_SCROLL_STEP);
+        }
+      }
+
+      function startEdgeScrollLoop() {
+        stopEdgeScrollLoop();
+        const tick = () => {
+          if (!session || !session.dragging) return;
+          edgeScroll(session.lastClientY);
+          session.insertIndex = findInsertIndex(session.lastClientY, session.card);
+          updateInsertIndicator(session.insertIndex);
+          moveFloat(session.lastClientX, session.lastClientY);
+          scrollRaf = requestAnimationFrame(tick);
+        };
+        scrollRaf = requestAnimationFrame(tick);
+      }
+
+      function moveFloat(clientX, clientY) {
+        if (!session || !session.floatEl) return;
+        session.floatEl.style.left = `${clientX - session.offsetX}px`;
+        session.floatEl.style.top = `${clientY - session.offsetY}px`;
+      }
+
+      function startDrag() {
+        if (!session || session.dragging) return;
+        const s = session;
+        s.dragging = true;
+        if (s.longPressTimer) {
+          clearTimeout(s.longPressTimer);
+          s.longPressTimer = null;
+        }
+
+        s.fromIndex = categories.indexOf(s.categoryName);
+        if (s.fromIndex < 0) return;
+
+        const card = s.card;
+        const rect = card.getBoundingClientRect();
+        card.classList.add('category-reorder-source', 'category-reorder-active');
+
+        const floatEl = card.cloneNode(true);
+        floatEl.classList.add('category-reorder-float');
+        floatEl.classList.remove('category-reorder-source', 'category-reorder-active');
+        floatEl.setAttribute('aria-hidden', 'true');
+        floatEl.style.width = `${rect.width}px`;
+        floatEl.style.left = `${rect.left}px`;
+        floatEl.style.top = `${rect.top}px`;
+        document.body.appendChild(floatEl);
+        s.floatEl = floatEl;
+        s.offsetX = s.lastClientX - rect.left;
+        s.offsetY = s.lastClientY - rect.top;
+
+        lockPageScroll();
+        try {
+          s.handle.setPointerCapture(s.pointerId);
+        } catch (err) {
+          /* ignore */
+        }
+
+        s.insertIndex = findInsertIndex(s.lastClientY, card);
+        updateInsertIndicator(s.insertIndex);
+        moveFloat(s.lastClientX, s.lastClientY);
+        startEdgeScrollLoop();
+      }
+
+      function applyCategoryReorder(fromIndex, insertIndex) {
+        if (fromIndex < 0 || categories.length < 2) return;
+        if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
+        const next = categories.slice();
+        const [item] = next.splice(fromIndex, 1);
+        if (insertIndex > fromIndex) insertIndex -= 1;
+        next.splice(insertIndex, 0, item);
+        categories = next;
+        saveCategories();
+        syncCategorySelect(categorySelect.value);
+        renderCategoryCards();
+      }
+
+      function detachDocumentListeners() {
+        document.removeEventListener('pointermove', onDocumentPointerMove);
+        document.removeEventListener('pointerup', onDocumentPointerUp);
+        document.removeEventListener('pointercancel', onDocumentPointerUp);
+      }
+
+      function cleanup() {
+        stopEdgeScrollLoop();
+        unlockPageScroll();
+        detachDocumentListeners();
+        if (!session) return;
+        if (session.longPressTimer) {
+          clearTimeout(session.longPressTimer);
+        }
+        if (session.floatEl) session.floatEl.remove();
+        if (session.card) {
+          session.card.classList.remove('category-reorder-source', 'category-reorder-active');
+        }
+        session = null;
+        if (insertIndicator) insertIndicator.hidden = true;
+      }
+
+      function onDocumentPointerMove(event) {
+        if (!session || event.pointerId !== session.pointerId) return;
+        session.lastClientX = event.clientX;
+        session.lastClientY = event.clientY;
+
+        if (!session.dragging) {
+          const dx = event.clientX - session.startX;
+          const dy = event.clientY - session.startY;
+          const distance = Math.hypot(dx, dy);
+          if (session.pointerType === 'touch') {
+            if (distance > CATEGORY_REORDER_MOVE_THRESHOLD) {
+              if (session.longPressTimer) {
+                clearTimeout(session.longPressTimer);
+                session.longPressTimer = null;
+              }
+            }
+            return;
+          }
+          if (distance >= CATEGORY_REORDER_MOVE_THRESHOLD) {
+            startDrag();
+          }
+          return;
+        }
+
+        event.preventDefault();
+        session.insertIndex = findInsertIndex(event.clientY, session.card);
+        updateInsertIndicator(session.insertIndex);
+        moveFloat(event.clientX, event.clientY);
+      }
+
+      function onDocumentPointerUp(event) {
+        if (!session || event.pointerId !== session.pointerId) return;
+        const wasDragging = session.dragging;
+        const fromIndex = session.fromIndex;
+        const insertIndex = session.insertIndex;
+        cleanup();
+        if (wasDragging) {
+          applyCategoryReorder(fromIndex, insertIndex);
+        }
+      }
+
+      function onHandlePointerDown(event) {
+        if (categories.length < 2) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        if (session) cleanup();
+
+        const handle = event.currentTarget;
+        const card = handle.closest('.checklist-category-card');
+        if (!card) return;
+
+        session = {
+          pointerId: event.pointerId,
+          pointerType: event.pointerType,
+          handle,
+          card,
+          categoryName: card.dataset.categoryName || '',
+          startX: event.clientX,
+          startY: event.clientY,
+          lastClientX: event.clientX,
+          lastClientY: event.clientY,
+          fromIndex: -1,
+          insertIndex: 0,
+          dragging: false,
+          longPressTimer: null,
+          floatEl: null,
+          offsetX: 0,
+          offsetY: 0
+        };
+
+        document.addEventListener('pointermove', onDocumentPointerMove, { passive: false });
+        document.addEventListener('pointerup', onDocumentPointerUp);
+        document.addEventListener('pointercancel', onDocumentPointerUp);
+
+        if (event.pointerType === 'touch') {
+          session.longPressTimer = setTimeout(() => {
+            if (session && !session.dragging) startDrag();
+          }, CATEGORY_REORDER_LONG_PRESS_MS);
+        }
+      }
+
+      function ensureInsertIndicator() {
+        if (insertIndicator && insertIndicator.isConnected && insertIndicator.parentNode === categoriesContainer) {
+          return;
+        }
+        insertIndicator = document.createElement('div');
+        insertIndicator.className = 'category-insert-indicator';
+        insertIndicator.hidden = true;
+        categoriesContainer.appendChild(insertIndicator);
+      }
+
+      function bindHandles() {
+        ensureInsertIndicator();
+        if (categories.length < 2) {
+          if (insertIndicator) insertIndicator.hidden = true;
+          return;
+        }
+        categoriesContainer.querySelectorAll('.category-drag-handle').forEach((handle) => {
+          handle.addEventListener('pointerdown', onHandlePointerDown);
+        });
+      }
+
+      return { bindHandles };
+    })();
 
     function removeCategoryByName(catName) {
       if (categories.length <= 1) return;
