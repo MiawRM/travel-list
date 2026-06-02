@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll-a</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll-b</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1704,7 +1704,7 @@
         draggable: '.checklist-category-card',
         handle: '.category-drag-handle',
         delay: 500,
-        delayOnTouchOnly: true,
+        delayOnTouchOnly: !touchFallback,
         touchStartThreshold: 12,
         ghostClass: 'category-sortable-ghost',
         chosenClass: 'category-sortable-chosen',
