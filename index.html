@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1113,6 +1113,7 @@
     let categorySortable = null;
     let lastCategoryDragRelatedIndex = null;
     let categoryDragTraceSession = null;
+    let categoryDragSavedBodyOverflow = null;
     const CATEGORY_DRAG_TRACE_MOVE_HEAD_MAX = 5;
     let memberPressTimer = null;
     let memberLongPressTriggered = false;
@@ -1377,6 +1378,23 @@
       if (card) applyCategoryCollapseState(card, cat);
     }
 
+    function bindCategoryDragHandleTouch(dragHandle) {
+      if (!dragHandle) return;
+      dragHandle.addEventListener('touchstart', (event) => {
+        event.preventDefault();
+      }, { passive: false });
+    }
+
+    function lockCategoryDragPageScroll() {
+      categoryDragSavedBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function unlockCategoryDragPageScroll() {
+      document.body.style.overflow = categoryDragSavedBodyOverflow || '';
+      categoryDragSavedBodyOverflow = null;
+    }
+
     function bindCategoryHeaderControl(el, handler) {
       if (!el) return;
       let lastInvokeAt = 0;
@@ -1497,6 +1515,7 @@
         dragHandle.className = 'category-drag-handle';
         dragHandle.setAttribute('aria-hidden', 'true');
         dragHandle.title = '长按拖动排序';
+        bindCategoryDragHandleTouch(dragHandle);
         const headerStart = document.createElement('div');
         headerStart.className = 'category-header-start';
         headerStart.appendChild(collapseBtn);
@@ -1706,6 +1725,7 @@
           fallbackTolerance: 4
         } : {}),
         onStart(evt) {
+          lockCategoryDragPageScroll();
           resetCategoryDragTrace();
           categoryDragTraceSession.onStart = snapshotCategoryDragEvent('onStart', evt);
           lastCategoryDragRelatedIndex = null;
@@ -1723,17 +1743,21 @@
           logCategoryDragEvent('onChange', evt);
         },
         onEnd(evt) {
-          categoryDragTraceSession.onEnd = snapshotCategoryDragEvent('onEnd', evt);
-          showCategoryDragDebugOnPage(evt);
-          logCategoryDragEvent('onEnd', evt);
-          if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
-            persistCategoryOrderFromDom();
+          try {
+            categoryDragTraceSession.onEnd = snapshotCategoryDragEvent('onEnd', evt);
+            showCategoryDragDebugOnPage(evt);
+            logCategoryDragEvent('onEnd', evt);
+            if (evt.oldIndex !== evt.newIndex && evt.newIndex != null) {
+              persistCategoryOrderFromDom();
+            }
+            logCategoryDragEvent('onEnd:afterPersist', {
+              oldIndex: evt.oldIndex,
+              newIndex: evt.newIndex,
+              item: evt.item
+            });
+          } finally {
+            unlockCategoryDragPageScroll();
           }
-          logCategoryDragEvent('onEnd:afterPersist', {
-            oldIndex: evt.oldIndex,
-            newIndex: evt.newIndex,
-            item: evt.item
-          });
         }
       });
     }
