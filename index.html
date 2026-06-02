@@ -1500,6 +1500,7 @@
       let insertIndicator = null;
       let scrollRaf = null;
       let savedBodyOverflow = null;
+      let endListenersAttached = false;
 
       function getCategoryCards() {
         return [...categoriesContainer.querySelectorAll('.checklist-category-card')];
@@ -1534,6 +1535,7 @@
         }
         insertIndicator.style.top = `${top}px`;
         insertIndicator.hidden = false;
+        insertIndicator.style.display = 'block';
       }
 
       function lockPageScroll() {
@@ -1611,6 +1613,7 @@
         lockPageScroll();
         try {
           s.handle.setPointerCapture(s.pointerId);
+          s.handle.addEventListener('lostpointercapture', onHandleLostPointerCapture);
         } catch (err) {
           /* ignore */
         }
@@ -1634,38 +1637,107 @@
         renderCategoryCards();
       }
 
-      function detachDocumentListeners() {
+      function detachMoveListener() {
         document.removeEventListener('pointermove', onDocumentPointerMove);
-        document.removeEventListener('pointerup', onDocumentPointerUp);
-        document.removeEventListener('pointercancel', onDocumentPointerUp);
+      }
+
+      function attachEndListeners() {
+        if (endListenersAttached) return;
+        window.addEventListener('pointerup', onWindowPointerEnd, true);
+        window.addEventListener('pointercancel', onWindowPointerEnd, true);
+        window.addEventListener('touchend', onWindowTouchEnd, true);
+        window.addEventListener('touchcancel', onWindowTouchEnd, true);
+        endListenersAttached = true;
+      }
+
+      function detachEndListeners() {
+        if (!endListenersAttached) return;
+        window.removeEventListener('pointerup', onWindowPointerEnd, true);
+        window.removeEventListener('pointercancel', onWindowPointerEnd, true);
+        window.removeEventListener('touchend', onWindowTouchEnd, true);
+        window.removeEventListener('touchcancel', onWindowTouchEnd, true);
+        endListenersAttached = false;
+      }
+
+      function resetDragUI() {
+        stopEdgeScrollLoop();
+        unlockPageScroll();
+        detachMoveListener();
+        document.querySelectorAll('.category-reorder-float').forEach((el) => el.remove());
+        categoriesContainer.querySelectorAll('.checklist-category-card').forEach((card) => {
+          card.classList.remove('category-reorder-source', 'category-reorder-active');
+        });
+        if (insertIndicator) {
+          insertIndicator.hidden = true;
+          insertIndicator.style.display = 'none';
+        }
       }
 
       function cleanup() {
-        stopEdgeScrollLoop();
-        unlockPageScroll();
-        detachDocumentListeners();
-        if (!session) return;
-        if (session.longPressTimer) {
-          clearTimeout(session.longPressTimer);
+        const active = session;
+        resetDragUI();
+        if (!active) return;
+        if (active.longPressTimer) {
+          clearTimeout(active.longPressTimer);
+        }
+        if (active.handle) {
+          active.handle.removeEventListener('lostpointercapture', onHandleLostPointerCapture);
         }
         try {
-          if (session.handle && session.pointerId != null) {
-            session.handle.releasePointerCapture(session.pointerId);
+          if (active.handle && active.pointerId != null) {
+            active.handle.releasePointerCapture(active.pointerId);
           }
         } catch (err) {
           /* ignore */
         }
-        if (session.floatEl) session.floatEl.remove();
-        if (session.card) {
-          session.card.classList.remove('category-reorder-source', 'category-reorder-active');
+        if (active.floatEl && active.floatEl.isConnected) {
+          active.floatEl.remove();
+        }
+        if (active.card) {
+          active.card.classList.remove('category-reorder-source', 'category-reorder-active');
         }
         session = null;
-        if (insertIndicator) insertIndicator.hidden = true;
+        if (!session) {
+          detachEndListeners();
+        }
+      }
+
+      function endSession() {
+        if (!session || session.ending) return;
+        session.ending = true;
+        const wasDragging = session.dragging;
+        const fromIndex = session.fromIndex;
+        const insertIndex = session.insertIndex;
+        cleanup();
+        if (wasDragging) {
+          applyCategoryReorder(fromIndex, insertIndex);
+        }
       }
 
       function cancelPending() {
         if (!session || session.dragging) return;
-        cleanup();
+        endSession();
+      }
+
+      function pointerIdMatches(event) {
+        if (!session || event.pointerId == null) return true;
+        return event.pointerId === session.pointerId;
+      }
+
+      function onWindowPointerEnd(event) {
+        if (!session) return;
+        if (!pointerIdMatches(event)) return;
+        endSession();
+      }
+
+      function onWindowTouchEnd() {
+        if (!session || session.pointerType !== 'touch') return;
+        endSession();
+      }
+
+      function onHandleLostPointerCapture() {
+        if (!session || !session.dragging || session.ending) return;
+        endSession();
       }
 
       function onDocumentPointerMove(event) {
@@ -1698,21 +1770,10 @@
         moveFloat(event.clientX, event.clientY);
       }
 
-      function onDocumentPointerUp(event) {
-        if (!session || event.pointerId !== session.pointerId) return;
-        const wasDragging = session.dragging;
-        const fromIndex = session.fromIndex;
-        const insertIndex = session.insertIndex;
-        cleanup();
-        if (wasDragging) {
-          applyCategoryReorder(fromIndex, insertIndex);
-        }
-      }
-
       function onHandlePointerDown(event) {
         if (categories.length < 2) return;
         if (event.button !== 0 && event.pointerType === 'mouse') return;
-        if (session) cleanup();
+        if (session) endSession();
 
         const handle = event.currentTarget;
         const card = handle.closest('.checklist-category-card');
@@ -1731,19 +1792,19 @@
           fromIndex: -1,
           insertIndex: 0,
           dragging: false,
+          ending: false,
           longPressTimer: null,
           floatEl: null,
           offsetX: 0,
           offsetY: 0
         };
 
+        attachEndListeners();
         document.addEventListener('pointermove', onDocumentPointerMove, { passive: false });
-        document.addEventListener('pointerup', onDocumentPointerUp);
-        document.addEventListener('pointercancel', onDocumentPointerUp);
 
         if (event.pointerType === 'touch') {
           session.longPressTimer = setTimeout(() => {
-            if (session && !session.dragging) startDrag();
+            if (session && !session.dragging && !session.ending) startDrag();
           }, CATEGORY_REORDER_LONG_PRESS_MS);
         }
       }
@@ -1755,13 +1816,18 @@
         insertIndicator = document.createElement('div');
         insertIndicator.className = 'category-insert-indicator';
         insertIndicator.hidden = true;
+        insertIndicator.style.display = 'none';
         categoriesContainer.appendChild(insertIndicator);
       }
 
       function bindHandles() {
+        resetDragUI();
         ensureInsertIndicator();
         if (categories.length < 2) {
-          if (insertIndicator) insertIndicator.hidden = true;
+          if (insertIndicator) {
+            insertIndicator.hidden = true;
+            insertIndicator.style.display = 'none';
+          }
           return;
         }
         categoriesContainer.querySelectorAll('.category-drag-handle').forEach((handle) => {
