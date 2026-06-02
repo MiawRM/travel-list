@@ -342,9 +342,13 @@
       position: fixed;
       z-index: 10000;
       margin: 0;
-      pointer-events: none;
+      pointer-events: none !important;
       box-shadow: 0 16px 40px rgba(59, 130, 246, 0.22);
       opacity: 0.98;
+    }
+
+    .category-reorder-float * {
+      pointer-events: none !important;
     }
 
     .category-add {
@@ -1539,11 +1543,13 @@
       }
 
       function lockPageScroll() {
-        savedBodyOverflow = document.body.style.overflow;
+        if (savedBodyOverflow == null) {
+          savedBodyOverflow = document.body.style.overflow;
+        }
         document.body.style.overflow = 'hidden';
       }
 
-      function unlockPageScroll() {
+      function forceUnlockPageScroll() {
         document.body.style.overflow = savedBodyOverflow || '';
         savedBodyOverflow = null;
       }
@@ -1585,7 +1591,6 @@
       function startDrag() {
         if (!session || session.dragging) return;
         const s = session;
-        s.dragging = true;
         if (s.longPressTimer) {
           clearTimeout(s.longPressTimer);
           s.longPressTimer = null;
@@ -1594,6 +1599,7 @@
         s.fromIndex = categories.indexOf(s.categoryName);
         if (s.fromIndex < 0) return;
 
+        s.dragging = true;
         const card = s.card;
         const rect = card.getBoundingClientRect();
         card.classList.add('category-reorder-source', 'category-reorder-active');
@@ -1602,6 +1608,7 @@
         floatEl.classList.add('category-reorder-float');
         floatEl.classList.remove('category-reorder-source', 'category-reorder-active');
         floatEl.setAttribute('aria-hidden', 'true');
+        floatEl.style.pointerEvents = 'none';
         floatEl.style.width = `${rect.width}px`;
         floatEl.style.left = `${rect.left}px`;
         floatEl.style.top = `${rect.top}px`;
@@ -1625,6 +1632,7 @@
       }
 
       function applyCategoryReorder(fromIndex, insertIndex) {
+        resetDragUI(null);
         if (fromIndex < 0 || categories.length < 2) return;
         if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
         const next = categories.slice();
@@ -1635,10 +1643,27 @@
         saveCategories();
         syncCategorySelect(categorySelect.value);
         renderCategoryCards();
+        resetDragUI(null);
       }
 
       function detachMoveListener() {
         document.removeEventListener('pointermove', onDocumentPointerMove);
+      }
+
+      function attachMoveListener() {
+        detachMoveListener();
+        document.addEventListener('pointermove', onDocumentPointerMove, { passive: false });
+      }
+
+      function releaseHandlePointerCapture(handle, pointerId) {
+        if (!handle || pointerId == null) return;
+        try {
+          if (handle.hasPointerCapture && handle.hasPointerCapture(pointerId)) {
+            handle.releasePointerCapture(pointerId);
+          }
+        } catch (err) {
+          /* ignore */
+        }
       }
 
       function attachEndListeners() {
@@ -1659,47 +1684,44 @@
         endListenersAttached = false;
       }
 
-      function resetDragUI() {
-        stopEdgeScrollLoop();
-        unlockPageScroll();
-        detachMoveListener();
+      function purgeDragArtifacts(activeSession) {
         document.querySelectorAll('.category-reorder-float').forEach((el) => el.remove());
         categoriesContainer.querySelectorAll('.checklist-category-card').forEach((card) => {
           card.classList.remove('category-reorder-source', 'category-reorder-active');
         });
+        if (activeSession && activeSession.floatEl && activeSession.floatEl.isConnected) {
+          activeSession.floatEl.remove();
+        }
+        if (activeSession && activeSession.card) {
+          activeSession.card.classList.remove('category-reorder-source', 'category-reorder-active');
+        }
         if (insertIndicator) {
           insertIndicator.hidden = true;
           insertIndicator.style.display = 'none';
+          insertIndicator.style.pointerEvents = 'none';
         }
+      }
+
+      function resetDragUI(activeSession) {
+        stopEdgeScrollLoop();
+        forceUnlockPageScroll();
+        detachMoveListener();
+        detachEndListeners();
+        if (activeSession && activeSession.longPressTimer) {
+          clearTimeout(activeSession.longPressTimer);
+          activeSession.longPressTimer = null;
+        }
+        if (activeSession && activeSession.handle) {
+          activeSession.handle.removeEventListener('lostpointercapture', onHandleLostPointerCapture);
+          releaseHandlePointerCapture(activeSession.handle, activeSession.pointerId);
+        }
+        purgeDragArtifacts(activeSession);
       }
 
       function cleanup() {
         const active = session;
-        resetDragUI();
-        if (!active) return;
-        if (active.longPressTimer) {
-          clearTimeout(active.longPressTimer);
-        }
-        if (active.handle) {
-          active.handle.removeEventListener('lostpointercapture', onHandleLostPointerCapture);
-        }
-        try {
-          if (active.handle && active.pointerId != null) {
-            active.handle.releasePointerCapture(active.pointerId);
-          }
-        } catch (err) {
-          /* ignore */
-        }
-        if (active.floatEl && active.floatEl.isConnected) {
-          active.floatEl.remove();
-        }
-        if (active.card) {
-          active.card.classList.remove('category-reorder-source', 'category-reorder-active');
-        }
         session = null;
-        if (!session) {
-          detachEndListeners();
-        }
+        resetDragUI(active);
       }
 
       function endSession() {
@@ -1800,7 +1822,7 @@
         };
 
         attachEndListeners();
-        document.addEventListener('pointermove', onDocumentPointerMove, { passive: false });
+        attachMoveListener();
 
         if (event.pointerType === 'touch') {
           session.longPressTimer = setTimeout(() => {
@@ -1821,7 +1843,7 @@
       }
 
       function bindHandles() {
-        resetDragUI();
+        resetDragUI(null);
         ensureInsertIndicator();
         if (categories.length < 2) {
           if (insertIndicator) {
@@ -1835,7 +1857,7 @@
         });
       }
 
-      return { bindHandles, cancelPending };
+      return { bindHandles, cancelPending, forceReset: () => resetDragUI(null) };
     })();
 
     function removeCategoryByName(catName) {
