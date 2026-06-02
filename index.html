@@ -229,8 +229,8 @@
       max-width: calc(100% - 72px);
       min-width: 0;
       position: relative;
-      z-index: 2;
-      pointer-events: none;
+      z-index: 4;
+      pointer-events: auto;
     }
 
     .category-header-start .category-collapse-btn,
@@ -1360,14 +1360,11 @@
         handler(event);
       };
       const stopDragPointerBubble = (event) => {
+        categoryListReorder.cancelPending();
         event.stopPropagation();
       };
       el.addEventListener('touchstart', stopDragPointerBubble, { capture: true, passive: true });
       el.addEventListener('pointerdown', stopDragPointerBubble, { capture: true });
-      el.addEventListener('touchend', (event) => {
-        event.preventDefault();
-        invoke(event);
-      }, { passive: false });
       el.addEventListener('pointerup', (event) => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         invoke(event);
@@ -1651,12 +1648,24 @@
         if (session.longPressTimer) {
           clearTimeout(session.longPressTimer);
         }
+        try {
+          if (session.handle && session.pointerId != null) {
+            session.handle.releasePointerCapture(session.pointerId);
+          }
+        } catch (err) {
+          /* ignore */
+        }
         if (session.floatEl) session.floatEl.remove();
         if (session.card) {
           session.card.classList.remove('category-reorder-source', 'category-reorder-active');
         }
         session = null;
         if (insertIndicator) insertIndicator.hidden = true;
+      }
+
+      function cancelPending() {
+        if (!session || session.dragging) return;
+        cleanup();
       }
 
       function onDocumentPointerMove(event) {
@@ -1760,7 +1769,7 @@
         });
       }
 
-      return { bindHandles };
+      return { bindHandles, cancelPending };
     })();
 
     function removeCategoryByName(catName) {
