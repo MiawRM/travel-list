@@ -806,7 +806,7 @@
 
   <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
 
-  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll</p>
+  <p class="build-version-marker" aria-hidden="true">Build: Safari Test 03 · touch-fallback+scroll-a</p>
 
   <div class="category-drag-debug" id="categoryDragDebug" aria-live="polite">
     <div class="category-drag-debug-title">Debug:</div>
@@ -1378,13 +1378,6 @@
       if (card) applyCategoryCollapseState(card, cat);
     }
 
-    function bindCategoryDragHandleTouch(dragHandle) {
-      if (!dragHandle) return;
-      dragHandle.addEventListener('touchstart', (event) => {
-        event.preventDefault();
-      }, { passive: false });
-    }
-
     function lockCategoryDragPageScroll() {
       categoryDragSavedBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -1515,7 +1508,6 @@
         dragHandle.className = 'category-drag-handle';
         dragHandle.setAttribute('aria-hidden', 'true');
         dragHandle.title = '长按拖动排序';
-        bindCategoryDragHandleTouch(dragHandle);
         const headerStart = document.createElement('div');
         headerStart.className = 'category-header-start';
         headerStart.appendChild(collapseBtn);
