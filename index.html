@@ -411,15 +411,15 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      cursor: pointer;
+      cursor: default;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .item.completed .item-name {
       color: #3b82f6;
-    }
-
-    .item-name:hover {
-      text-decoration: underline;
     }
 
     .avatars {
@@ -711,10 +711,10 @@
 
 <body>
 
-  <div class="title trip-title-placeholder" id="tripTitle" role="button" tabindex="0" title="点击编辑旅行名称">给你的旅行取个名字吧～</div>
+  <div class="title trip-title-placeholder" id="tripTitle" role="button" tabindex="0" title="长按编辑旅行名称">给你的旅行取个名字吧～</div>
 
   <div class="card">
-    <div class="members-title" id="membersSectionTitle" role="button" tabindex="0" title="点击编辑">我们</div>
+    <div class="members-title" id="membersSectionTitle" role="button" tabindex="0" title="长按编辑">也请赐给我们的队伍一个名字</div>
     <div class="member-list" id="memberList"></div>
   </div>
 
@@ -975,7 +975,8 @@
     const TRIP_TITLE_PLACEHOLDER = '给你的旅行取个名字吧～';
     const LEGACY_DEFAULT_TRIP_TITLES = ['克罗地亚之旅'];
     const MEMBERS_SECTION_TITLE_STORAGE_KEY = 'travel-checklist-members-section-title-v1';
-    const DEFAULT_MEMBERS_SECTION_TITLE = '我们';
+    const DEFAULT_MEMBERS_SECTION_TITLE = '也请赐给我们的队伍一个名字';
+    const LEGACY_DEFAULT_MEMBERS_SECTION_TITLES = ['我们'];
 
     const DEFAULT_CATEGORY_ORDER = [
       '证件',
@@ -1036,22 +1037,18 @@
     let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
     let collapsedCategories = {};
     let editingItemId = null;
+    let editingItemNameOnly = false;
     let editingMemberId = null;
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
     let pendingDeleteAction = null;
-    let memberPressTimer = null;
-    let memberLongPressTriggered = false;
-    let memberPressStart = null;
     let memberActionTargetId = null;
     let categoryActionTargetName = null;
-    let categoryNameLongPressTriggered = false;
-    let categoryNamePressTimer = null;
-    let categoryNamePressStart = null;
-    const MEMBER_LONG_PRESS_MS = 500;
-    const CATEGORY_NAME_MOVE_CANCEL_PX = 10;
+    const UI_LONG_PRESS_MS = 500;
+    const UI_LONG_PRESS_MOVE_CANCEL_PX = 10;
     const DELETE_COPY = {
       default: { title: '确认删除？', message: '删除后无法恢复' },
+      item: { title: '是否删除该物品？', message: '' },
       member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' }
     };
     const categoryCards = {};
@@ -1061,6 +1058,67 @@
         return window.crypto.randomUUID();
       }
       return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function bindUiLongPress(element, handlers) {
+      if (!element || !handlers || typeof handlers.onLongPress !== 'function') return;
+      let pressTimer = null;
+      let pressStart = null;
+      let longPressTriggered = false;
+
+      function clearPressTimer() {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      }
+
+      element.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        if (typeof handlers.onPointerDown === 'function') {
+          handlers.onPointerDown(event);
+        }
+        longPressTriggered = false;
+        pressStart = { x: event.clientX, y: event.clientY };
+        clearPressTimer();
+        pressTimer = window.setTimeout(() => {
+          longPressTriggered = true;
+          handlers.onLongPress(event);
+          clearPressTimer();
+          pressStart = null;
+        }, UI_LONG_PRESS_MS);
+      });
+
+      element.addEventListener('pointermove', (event) => {
+        if (!pressTimer || !pressStart) return;
+        const dx = Math.abs(event.clientX - pressStart.x);
+        const dy = Math.abs(event.clientY - pressStart.y);
+        if (dx > UI_LONG_PRESS_MOVE_CANCEL_PX || dy > UI_LONG_PRESS_MOVE_CANCEL_PX) {
+          clearPressTimer();
+          pressStart = null;
+        }
+      });
+
+      const endPress = () => {
+        clearPressTimer();
+        pressStart = null;
+      };
+      element.addEventListener('pointerup', endPress);
+      element.addEventListener('pointercancel', endPress);
+
+      if (typeof handlers.onTap === 'function') {
+        element.addEventListener('click', (event) => {
+          if (longPressTriggered) {
+            longPressTriggered = false;
+            return;
+          }
+          handlers.onTap(event);
+        });
+      }
+    }
+
+    function isLegacyDefaultMembersSectionTitle(name) {
+      return LEGACY_DEFAULT_MEMBERS_SECTION_TITLES.includes(String(name || '').trim());
     }
 
     function categoryHeading(key) {
@@ -1159,7 +1217,7 @@
         const raw = localStorage.getItem(MEMBERS_SECTION_TITLE_STORAGE_KEY);
         if (raw) {
           const name = String(raw).trim();
-          if (name) {
+          if (name && !isLegacyDefaultMembersSectionTitle(name)) {
             membersSectionTitle = name;
             return;
           }
@@ -1317,13 +1375,6 @@
       categories.forEach(updateCategoryProgressDisplay);
     }
 
-    function clearCategoryNamePressTimer() {
-      if (categoryNamePressTimer) {
-        clearTimeout(categoryNamePressTimer);
-        categoryNamePressTimer = null;
-      }
-    }
-
     function openCategoryActionModal(catName) {
       if (!catName) return;
       categoryActionTargetName = catName;
@@ -1372,20 +1423,19 @@
     function openConfirmDelete(onConfirm, copyKey = 'default') {
       const copy = DELETE_COPY[copyKey] || DELETE_COPY.default;
       confirmDeleteTitle.textContent = copy.title;
-      confirmDeleteMessage.textContent = copy.message;
+      if (copy.message) {
+        confirmDeleteMessage.textContent = copy.message;
+        confirmDeleteMessage.hidden = false;
+      } else {
+        confirmDeleteMessage.textContent = '';
+        confirmDeleteMessage.hidden = true;
+      }
       pendingDeleteAction = onConfirm;
       confirmDeleteModal.classList.add('show');
     }
 
     function openConfirmDeleteMember(memberId) {
       openConfirmDelete(() => removeMemberById(memberId), 'member');
-    }
-
-    function clearMemberPressTimer() {
-      if (memberPressTimer) {
-        clearTimeout(memberPressTimer);
-        memberPressTimer = null;
-      }
     }
 
     function closeConfirmDelete() {
@@ -1465,6 +1515,14 @@
         header.appendChild(progressEl);
 
         bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
+        bindUiLongPress(nameSpan, {
+          onPointerDown: (event) => {
+            categoryListReorder.cancelPending();
+            event.stopPropagation();
+          },
+          onTap: () => toggleCategoryCollapse(cat),
+          onLongPress: () => openCategoryActionModal(cat)
+        });
         card.appendChild(header);
         applyCategoryCollapseState(card, cat);
 
@@ -1976,6 +2034,10 @@
         nm.textContent = m.name;
         chip.appendChild(av);
         chip.appendChild(nm);
+        bindUiLongPress(chip, {
+          onTap: () => openMemberPendingModal(m.id),
+          onLongPress: () => openMemberActionModal(m.id)
+        });
         memberList.appendChild(chip);
       });
       const addChip = document.createElement('button');
@@ -1986,6 +2048,10 @@
       addAv.className = 'member-avatar';
       addAv.textContent = '＋';
       addChip.appendChild(addAv);
+      addChip.addEventListener('click', (event) => {
+        event.preventDefault();
+        openAddMemberModal();
+      });
       memberList.appendChild(addChip);
     }
 
@@ -2286,56 +2352,6 @@
       if (event.target === addMemberModal) closeAddMemberModal();
     });
 
-    memberList.addEventListener('pointerdown', (event) => {
-      const chip = event.target.closest('.member-chip:not(.member-add-chip)');
-      if (!chip) return;
-      memberLongPressTriggered = false;
-      memberPressStart = { x: event.clientX, y: event.clientY };
-      const memberId = chip.dataset.memberId;
-      clearMemberPressTimer();
-      memberPressTimer = window.setTimeout(() => {
-        memberLongPressTriggered = true;
-        openMemberActionModal(memberId);
-        clearMemberPressTimer();
-      }, MEMBER_LONG_PRESS_MS);
-    });
-
-    memberList.addEventListener('pointerup', () => {
-      clearMemberPressTimer();
-      memberPressStart = null;
-    });
-
-    memberList.addEventListener('pointercancel', () => {
-      clearMemberPressTimer();
-      memberPressStart = null;
-    });
-
-    memberList.addEventListener('pointermove', (event) => {
-      if (!memberPressTimer || !memberPressStart) return;
-      const dx = Math.abs(event.clientX - memberPressStart.x);
-      const dy = Math.abs(event.clientY - memberPressStart.y);
-      if (dx > 10 || dy > 10) {
-        clearMemberPressTimer();
-        memberPressStart = null;
-      }
-    });
-
-    memberList.addEventListener('click', (event) => {
-      const addChip = event.target.closest('.member-add-chip');
-      if (addChip) {
-        event.preventDefault();
-        openAddMemberModal();
-        return;
-      }
-      const chip = event.target.closest('.member-chip');
-      if (!chip) return;
-      if (memberLongPressTriggered) {
-        memberLongPressTriggered = false;
-        return;
-      }
-      openMemberPendingModal(chip.dataset.memberId);
-    });
-
     closeMemberPendingBtn.addEventListener('click', closeMemberPendingModal);
     memberPendingModal.addEventListener('click', (event) => {
       if (event.target === memberPendingModal) closeMemberPendingModal();
@@ -2402,52 +2418,6 @@
       if (event.target === categoryModal) closeCategoryModal();
     });
 
-    categoriesContainer.addEventListener('pointerdown', (event) => {
-      const nameEl = event.target.closest('.category-name');
-      if (!nameEl) return;
-      categoryListReorder.cancelPending();
-      event.stopPropagation();
-      categoryNameLongPressTriggered = false;
-      categoryNamePressStart = { x: event.clientX, y: event.clientY };
-      clearCategoryNamePressTimer();
-      categoryNamePressTimer = window.setTimeout(() => {
-        categoryNameLongPressTriggered = true;
-        openCategoryActionModal(nameEl.dataset.categoryName);
-        clearCategoryNamePressTimer();
-      }, MEMBER_LONG_PRESS_MS);
-    });
-
-    categoriesContainer.addEventListener('pointerup', () => {
-      clearCategoryNamePressTimer();
-      categoryNamePressStart = null;
-    });
-
-    categoriesContainer.addEventListener('pointercancel', () => {
-      clearCategoryNamePressTimer();
-      categoryNamePressStart = null;
-    });
-
-    categoriesContainer.addEventListener('pointermove', (event) => {
-      if (!categoryNamePressTimer || !categoryNamePressStart) return;
-      const dx = Math.abs(event.clientX - categoryNamePressStart.x);
-      const dy = Math.abs(event.clientY - categoryNamePressStart.y);
-      if (dx > CATEGORY_NAME_MOVE_CANCEL_PX || dy > CATEGORY_NAME_MOVE_CANCEL_PX) {
-        clearCategoryNamePressTimer();
-        categoryNamePressStart = null;
-      }
-    });
-
-    categoriesContainer.addEventListener('click', (event) => {
-      const nameEl = event.target.closest('.category-name');
-      if (!nameEl) return;
-      event.stopPropagation();
-      if (categoryNameLongPressTriggered) {
-        categoryNameLongPressTriggered = false;
-        return;
-      }
-      toggleCategoryCollapse(nameEl.dataset.categoryName);
-    });
-
     categoriesContainer.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       const nameEl = event.target.closest('.category-name');
@@ -2506,23 +2476,30 @@
       modal.classList.remove('show');
     }
 
-    function openEditOwnersModal(itemId) {
+    function setEditItemModalOwnersVisible(visible) {
+      editOwnersItemLabel.hidden = !visible;
+      editOwnerOptions.hidden = !visible;
+    }
+
+    function openEditItemNameModal(itemId) {
       const item = checklistItems.find(entry => entry.id === itemId);
       if (!item) return;
       editingItemId = itemId;
+      editingItemNameOnly = true;
+      setEditItemModalOwnersVisible(false);
+      editOwnersModal.querySelector('h3').textContent = '修改物品名称';
       editItemNameInput.value = item.name;
-      editOwnersItemLabel.textContent = '负责人（可多选）';
-      renderOwnerCheckboxes(editOwnerOptions, {
-        selectedOwners: item.owners || [],
-        isAllMembers: !!item.isAllMembers
-      });
       editOwnersModal.classList.add('show');
       editItemNameInput.focus();
+      editItemNameInput.select();
     }
 
     function closeEditOwnersModal() {
       editOwnersModal.classList.remove('show');
       editingItemId = null;
+      editingItemNameOnly = false;
+      setEditItemModalOwnersVisible(true);
+      editOwnersModal.querySelector('h3').textContent = '编辑物品';
     }
 
     function saveEditedOwners() {
@@ -2535,11 +2512,13 @@
         return;
       }
       item.name = nextName;
-      const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
-      item.isAllMembers = isAllMembers;
-      item.owners = owners;
-      item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
-      item.completed = isItemAllOwnersComplete(item);
+      if (!editingItemNameOnly) {
+        const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
+        item.isAllMembers = isAllMembers;
+        item.owners = owners;
+        item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
+        item.completed = isItemAllOwnersComplete(item);
+      }
       saveChecklistItems();
       renderChecklistItems();
       closeEditOwnersModal();
@@ -2591,6 +2570,10 @@
       const name = document.createElement('span');
       name.className = 'item-name';
       name.textContent = itemData.name;
+      name.title = '长按修改名称';
+      bindUiLongPress(name, {
+        onLongPress: () => openEditItemNameModal(itemData.id)
+      });
 
       const avatars = document.createElement('div');
       avatars.className = 'avatars';
@@ -2773,7 +2756,7 @@
       if (!item) return;
 
       const itemId = item.dataset.itemId;
-      openConfirmDelete(() => removeItemById(itemId));
+      openConfirmDelete(() => removeItemById(itemId), 'item');
     });
 
     document.addEventListener('click', (event) => {
@@ -2789,17 +2772,12 @@
         toggleOwnerCompletion(targetItem, ownerName);
         saveChecklistItems();
         renderChecklistItems();
-        return;
       }
-
-      const itemName = event.target.closest('.item-name');
-      if (!itemName) return;
-      const item = itemName.closest('.item');
-      if (!item) return;
-      openEditOwnersModal(item.dataset.itemId);
     });
 
-    tripTitleEl.addEventListener('click', openEditTripTitleModal);
+    bindUiLongPress(tripTitleEl, {
+      onLongPress: openEditTripTitleModal
+    });
     tripTitleEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
@@ -2815,7 +2793,9 @@
       if (event.target === editTripTitleModal) closeEditTripTitleModal();
     });
 
-    membersSectionTitleEl.addEventListener('click', openEditMembersSectionTitleModal);
+    bindUiLongPress(membersSectionTitleEl, {
+      onLongPress: openEditMembersSectionTitleModal
+    });
     membersSectionTitleEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
