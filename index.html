@@ -411,15 +411,15 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      cursor: default;
-      touch-action: manipulation;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
+      cursor: pointer;
     }
 
     .item.completed .item-name {
       color: #3b82f6;
+    }
+
+    .item-name:hover {
+      text-decoration: underline;
     }
 
     .avatars {
@@ -1037,7 +1037,6 @@
     let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
     let collapsedCategories = {};
     let editingItemId = null;
-    let editingItemNameOnly = false;
     let editingMemberId = null;
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
@@ -1048,7 +1047,6 @@
     const UI_LONG_PRESS_MOVE_CANCEL_PX = 10;
     const DELETE_COPY = {
       default: { title: '确认删除？', message: '删除后无法恢复' },
-      item: { title: '是否删除该物品？', message: '' },
       member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' }
     };
     const categoryCards = {};
@@ -2476,30 +2474,23 @@
       modal.classList.remove('show');
     }
 
-    function setEditItemModalOwnersVisible(visible) {
-      editOwnersItemLabel.hidden = !visible;
-      editOwnerOptions.hidden = !visible;
-    }
-
-    function openEditItemNameModal(itemId) {
+    function openEditOwnersModal(itemId) {
       const item = checklistItems.find(entry => entry.id === itemId);
       if (!item) return;
       editingItemId = itemId;
-      editingItemNameOnly = true;
-      setEditItemModalOwnersVisible(false);
-      editOwnersModal.querySelector('h3').textContent = '修改物品名称';
       editItemNameInput.value = item.name;
+      editOwnersItemLabel.textContent = '负责人（可多选）';
+      renderOwnerCheckboxes(editOwnerOptions, {
+        selectedOwners: item.owners || [],
+        isAllMembers: !!item.isAllMembers
+      });
       editOwnersModal.classList.add('show');
       editItemNameInput.focus();
-      editItemNameInput.select();
     }
 
     function closeEditOwnersModal() {
       editOwnersModal.classList.remove('show');
       editingItemId = null;
-      editingItemNameOnly = false;
-      setEditItemModalOwnersVisible(true);
-      editOwnersModal.querySelector('h3').textContent = '编辑物品';
     }
 
     function saveEditedOwners() {
@@ -2512,13 +2503,11 @@
         return;
       }
       item.name = nextName;
-      if (!editingItemNameOnly) {
-        const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
-        item.isAllMembers = isAllMembers;
-        item.owners = owners;
-        item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
-        item.completed = isItemAllOwnersComplete(item);
-      }
+      const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
+      item.isAllMembers = isAllMembers;
+      item.owners = owners;
+      item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
+      item.completed = isItemAllOwnersComplete(item);
       saveChecklistItems();
       renderChecklistItems();
       closeEditOwnersModal();
@@ -2570,10 +2559,6 @@
       const name = document.createElement('span');
       name.className = 'item-name';
       name.textContent = itemData.name;
-      name.title = '长按修改名称';
-      bindUiLongPress(name, {
-        onLongPress: () => openEditItemNameModal(itemData.id)
-      });
 
       const avatars = document.createElement('div');
       avatars.className = 'avatars';
@@ -2756,7 +2741,7 @@
       if (!item) return;
 
       const itemId = item.dataset.itemId;
-      openConfirmDelete(() => removeItemById(itemId), 'item');
+      openConfirmDelete(() => removeItemById(itemId));
     });
 
     document.addEventListener('click', (event) => {
@@ -2772,7 +2757,14 @@
         toggleOwnerCompletion(targetItem, ownerName);
         saveChecklistItems();
         renderChecklistItems();
+        return;
       }
+
+      const itemName = event.target.closest('.item-name');
+      if (!itemName) return;
+      const item = itemName.closest('.item');
+      if (!item) return;
+      openEditOwnersModal(item.dataset.itemId);
     });
 
     bindUiLongPress(tripTitleEl, {
