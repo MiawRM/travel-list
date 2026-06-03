@@ -233,60 +233,31 @@
       pointer-events: auto;
     }
 
-    .category-header-start .category-collapse-btn,
     .category-header-start .category-name,
     .category-header-start .category-add {
       pointer-events: auto;
     }
 
-    .category-collapse-btn {
-      position: relative;
-      z-index: 3;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      margin: 0;
-      border: none;
-      border-radius: 10px;
-      background: transparent;
-      font-size: 14px;
-      font-weight: bold;
-      line-height: 1;
-      color: #3b82f6;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .category-collapse-btn:hover {
-      background: #eff6ff;
-      color: #2563eb;
-    }
-
     .category-name {
-      flex: 0 1 auto;
-      width: fit-content;
-      max-width: min(52vw, 220px);
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: min(52vw, 260px);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
+      padding: 4px 2px;
+      border-radius: 8px;
     }
 
     .category-name:hover {
       color: #2563eb;
+      background: #eff6ff;
     }
 
     .category-drag-handle {
@@ -387,52 +358,9 @@
       display: none;
     }
 
-    .category-delete {
-      position: relative;
-      z-index: 3;
-      pointer-events: auto;
-      box-sizing: border-box;
-      width: 34px;
-      height: 34px;
-      padding: 3px;
-      margin: 0;
-      margin-left: auto;
-      border: none;
-      border-radius: 50%;
-      background: #fee2e2;
-      background-clip: content-box;
-      color: #f87171;
-      font-size: 18px;
-      line-height: 1;
-      cursor: pointer;
-      display: inline-flex;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .category-delete:hover {
-      background: #fecaca;
-      color: #ef4444;
-    }
-
-    .category-delete:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-
-
     @media (max-width: 768px), (hover: none) and (pointer: coarse) {
       .category-header-start {
         gap: 6px;
-      }
-
-      .category-collapse-btn {
-        width: 36px;
-        height: 36px;
       }
 
       .category-add {
@@ -442,23 +370,12 @@
         margin-left: 4px;
       }
 
-      .category-delete {
-        width: 34px;
-        height: 34px;
-        padding: 3px;
-      }
-
       .category-drag-handle {
         min-width: 16px;
         margin-left: 8px;
         margin-right: 8px;
         height: 32px;
       }
-    }
-
-    .category-delete:disabled:hover {
-      background: #fee2e2;
-      color: #f87171;
     }
 
     .item {
@@ -943,6 +860,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="categoryActionModal">
+    <div class="modal">
+      <h3 id="categoryActionTitle">分类</h3>
+      <div class="member-action-list">
+        <button type="button" class="member-action-btn" id="categoryActionRenameBtn">修改分类名称</button>
+        <button type="button" class="member-action-btn member-action-btn-danger" id="categoryActionDeleteBtn">删除分类</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelCategoryActionBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="confirmDeleteModal">
     <div class="modal">
       <h3 id="confirmDeleteTitle">确认删除？</h3>
@@ -1005,6 +935,11 @@
     const memberActionEditBtn = document.getElementById('memberActionEditBtn');
     const memberActionDeleteBtn = document.getElementById('memberActionDeleteBtn');
     const cancelMemberActionBtn = document.getElementById('cancelMemberActionBtn');
+    const categoryActionModal = document.getElementById('categoryActionModal');
+    const categoryActionTitle = document.getElementById('categoryActionTitle');
+    const categoryActionRenameBtn = document.getElementById('categoryActionRenameBtn');
+    const categoryActionDeleteBtn = document.getElementById('categoryActionDeleteBtn');
+    const cancelCategoryActionBtn = document.getElementById('cancelCategoryActionBtn');
     const categoriesContainer = document.getElementById('categoriesContainer');
     const categoryModal = document.getElementById('addCategoryModal');
     const newCategoryNameInput = document.getElementById('newCategoryNameInput');
@@ -1094,7 +1029,12 @@
     let memberLongPressTriggered = false;
     let memberPressStart = null;
     let memberActionTargetId = null;
+    let categoryActionTargetName = null;
+    let categoryNameLongPressTriggered = false;
+    let categoryNamePressTimer = null;
+    let categoryNamePressStart = null;
     const MEMBER_LONG_PRESS_MS = 500;
+    const CATEGORY_NAME_MOVE_CANCEL_PX = 10;
     const DELETE_COPY = {
       default: { title: '确认删除？', message: '删除后无法恢复' },
       member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' }
@@ -1326,22 +1266,34 @@
       }
     }
 
-    function categoryCollapseArrow(cat) {
-      return collapsedCategories[cat] ? '▶' : '▼';
-    }
-
     function applyCategoryCollapseState(card, cat) {
       const collapsed = !!collapsedCategories[cat];
       card.classList.toggle('collapsed', collapsed);
-      const btn = card.querySelector('.category-collapse-btn');
       const label = card.querySelector('.category-name');
-      if (btn) {
-        btn.textContent = categoryCollapseArrow(cat);
-        btn.setAttribute('aria-expanded', String(!collapsed));
-      }
       if (label) {
         label.textContent = categoryHeading(cat);
+        label.setAttribute('aria-expanded', String(!collapsed));
       }
+    }
+
+    function clearCategoryNamePressTimer() {
+      if (categoryNamePressTimer) {
+        clearTimeout(categoryNamePressTimer);
+        categoryNamePressTimer = null;
+      }
+    }
+
+    function openCategoryActionModal(catName) {
+      if (!catName) return;
+      categoryActionTargetName = catName;
+      categoryActionTitle.textContent = categoryHeading(catName);
+      categoryActionDeleteBtn.disabled = categories.length <= 1;
+      categoryActionModal.classList.add('show');
+    }
+
+    function closeCategoryActionModal() {
+      categoryActionTargetName = null;
+      categoryActionModal.classList.remove('show');
     }
 
     function toggleCategoryCollapse(cat) {
@@ -1442,49 +1394,31 @@
 
         const header = document.createElement('div');
         header.className = 'category-card-header';
-        const collapseBtn = document.createElement('button');
-        collapseBtn.type = 'button';
-        collapseBtn.className = 'category-collapse-btn';
-        collapseBtn.dataset.categoryName = cat;
-        collapseBtn.setAttribute('role', 'button');
-        collapseBtn.setAttribute('tabindex', '0');
-        collapseBtn.setAttribute('aria-label', '展开或收起分类');
         const nameSpan = document.createElement('span');
         nameSpan.className = 'category category-name';
         nameSpan.dataset.categoryName = cat;
-        nameSpan.setAttribute('title', '点击编辑分类名称');
+        nameSpan.setAttribute('role', 'button');
+        nameSpan.setAttribute('tabindex', '0');
+        nameSpan.setAttribute('title', '点击展开或收起；长按更多操作');
+        nameSpan.setAttribute('aria-label', '展开或收起分类');
         const addItemBtn = document.createElement('button');
         addItemBtn.type = 'button';
         addItemBtn.className = 'category-add';
         addItemBtn.dataset.categoryName = cat;
         addItemBtn.setAttribute('aria-label', `添加物品到${cat}`);
         addItemBtn.textContent = '＋';
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'category-delete';
-        delBtn.dataset.categoryName = cat;
-        delBtn.setAttribute('aria-label', '删除分类');
-        delBtn.textContent = '×';
-        delBtn.disabled = categories.length <= 1;
         const dragHandle = document.createElement('div');
         dragHandle.className = 'category-drag-handle';
         dragHandle.setAttribute('aria-hidden', 'true');
         dragHandle.title = '长按拖动排序';
         const headerStart = document.createElement('div');
         headerStart.className = 'category-header-start';
-        headerStart.appendChild(collapseBtn);
         headerStart.appendChild(nameSpan);
         headerStart.appendChild(addItemBtn);
         header.appendChild(headerStart);
         header.appendChild(dragHandle);
-        header.appendChild(delBtn);
 
-        bindCategoryHeaderControl(collapseBtn, () => toggleCategoryCollapse(cat));
         bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
-        bindCategoryHeaderControl(nameSpan, () => openEditCategoryModal(cat));
-        bindCategoryHeaderControl(delBtn, () => {
-          openConfirmDelete(() => removeCategoryByName(cat));
-        });
         card.appendChild(header);
         applyCategoryCollapseState(card, cat);
 
@@ -2421,12 +2355,74 @@
       if (event.target === categoryModal) closeCategoryModal();
     });
 
+    categoriesContainer.addEventListener('pointerdown', (event) => {
+      const nameEl = event.target.closest('.category-name');
+      if (!nameEl) return;
+      categoryListReorder.cancelPending();
+      event.stopPropagation();
+      categoryNameLongPressTriggered = false;
+      categoryNamePressStart = { x: event.clientX, y: event.clientY };
+      clearCategoryNamePressTimer();
+      categoryNamePressTimer = window.setTimeout(() => {
+        categoryNameLongPressTriggered = true;
+        openCategoryActionModal(nameEl.dataset.categoryName);
+        clearCategoryNamePressTimer();
+      }, MEMBER_LONG_PRESS_MS);
+    });
+
+    categoriesContainer.addEventListener('pointerup', () => {
+      clearCategoryNamePressTimer();
+      categoryNamePressStart = null;
+    });
+
+    categoriesContainer.addEventListener('pointercancel', () => {
+      clearCategoryNamePressTimer();
+      categoryNamePressStart = null;
+    });
+
+    categoriesContainer.addEventListener('pointermove', (event) => {
+      if (!categoryNamePressTimer || !categoryNamePressStart) return;
+      const dx = Math.abs(event.clientX - categoryNamePressStart.x);
+      const dy = Math.abs(event.clientY - categoryNamePressStart.y);
+      if (dx > CATEGORY_NAME_MOVE_CANCEL_PX || dy > CATEGORY_NAME_MOVE_CANCEL_PX) {
+        clearCategoryNamePressTimer();
+        categoryNamePressStart = null;
+      }
+    });
+
+    categoriesContainer.addEventListener('click', (event) => {
+      const nameEl = event.target.closest('.category-name');
+      if (!nameEl) return;
+      event.stopPropagation();
+      if (categoryNameLongPressTriggered) {
+        categoryNameLongPressTriggered = false;
+        return;
+      }
+      toggleCategoryCollapse(nameEl.dataset.categoryName);
+    });
+
     categoriesContainer.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const collapseBtn = event.target.closest('.category-collapse-btn');
-      if (!collapseBtn) return;
+      const nameEl = event.target.closest('.category-name');
+      if (!nameEl) return;
       event.preventDefault();
-      collapseBtn.click();
+      toggleCategoryCollapse(nameEl.dataset.categoryName);
+    });
+
+    cancelCategoryActionBtn.addEventListener('click', closeCategoryActionModal);
+    categoryActionModal.addEventListener('click', (event) => {
+      if (event.target === categoryActionModal) closeCategoryActionModal();
+    });
+    categoryActionRenameBtn.addEventListener('click', () => {
+      const catName = categoryActionTargetName;
+      closeCategoryActionModal();
+      if (catName) openEditCategoryModal(catName);
+    });
+    categoryActionDeleteBtn.addEventListener('click', () => {
+      const catName = categoryActionTargetName;
+      closeCategoryActionModal();
+      if (!catName || categories.length <= 1) return;
+      openConfirmDelete(() => removeCategoryByName(catName));
     });
 
     function openInviteJoinModal() {
