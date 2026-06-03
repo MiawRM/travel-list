@@ -354,6 +354,21 @@
       background: #dbeafe;
     }
 
+    .category-progress {
+      flex-shrink: 0;
+      min-width: 2.75em;
+      margin-left: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      text-align: right;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
     .checklist-category-card.collapsed .item {
       display: none;
     }
@@ -1276,6 +1291,32 @@
       }
     }
 
+    function getCategoryItemProgress(cat) {
+      const items = checklistItems.filter(item => item.category === cat);
+      const total = items.length;
+      const completed = items.filter(item => isItemAllOwnersComplete(item)).length;
+      return { completed, total };
+    }
+
+    function formatCategoryProgress(cat) {
+      const { completed, total } = getCategoryItemProgress(cat);
+      return `${completed}/${total}`;
+    }
+
+    function updateCategoryProgressDisplay(cat) {
+      const card = categoryCards[cat];
+      if (!card) return;
+      const progressEl = card.querySelector('.category-progress');
+      if (!progressEl) return;
+      const { completed, total } = getCategoryItemProgress(cat);
+      progressEl.textContent = `${completed}/${total}`;
+      progressEl.setAttribute('aria-label', `已完成 ${completed}，共 ${total}`);
+    }
+
+    function updateAllCategoryProgressDisplays() {
+      categories.forEach(updateCategoryProgressDisplay);
+    }
+
     function clearCategoryNamePressTimer() {
       if (categoryNamePressTimer) {
         clearTimeout(categoryNamePressTimer);
@@ -1413,10 +1454,15 @@
         dragHandle.title = '长按拖动排序';
         const headerStart = document.createElement('div');
         headerStart.className = 'category-header-start';
+        const progressEl = document.createElement('span');
+        progressEl.className = 'category-progress';
+        progressEl.setAttribute('aria-hidden', 'true');
+
         headerStart.appendChild(nameSpan);
         headerStart.appendChild(addItemBtn);
         header.appendChild(headerStart);
         header.appendChild(dragHandle);
+        header.appendChild(progressEl);
 
         bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
         card.appendChild(header);
@@ -1424,6 +1470,7 @@
 
         categoriesContainer.appendChild(card);
         categoryCards[cat] = card;
+        updateCategoryProgressDisplay(cat);
       });
       categoryListReorder.bindHandles();
     }
@@ -2594,6 +2641,7 @@
         if (!card) return;
         card.appendChild(createItemElement(itemData));
       });
+      updateAllCategoryProgressDisplays();
     }
 
     function loadChecklistItems() {
