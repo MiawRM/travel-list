@@ -1043,6 +1043,14 @@
       line-height: 1.4;
     }
 
+    .travel-card-countdown {
+      font-size: 12px;
+      color: var(--color-secondary);
+      font-weight: 400;
+      line-height: 1.4;
+      margin: 8px 0;
+    }
+
     .travel-card-avatars {
       display: flex;
       flex-wrap: nowrap;
@@ -4059,6 +4067,27 @@
       return '未设置日期';
     }
 
+    function getDaysLeft(startDate) {
+      const iso = normalizeToIsoDate(startDate);
+      if (!iso) return null;
+      const parts = iso.split('-').map(Number);
+      const start = new Date(parts[0], parts[1] - 1, parts[2]);
+      const today = new Date();
+      start.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      return Math.round((start.getTime() - today.getTime()) / 86400000);
+    }
+
+    function getCountdownText(startDate) {
+      const daysLeft = getDaysLeft(startDate);
+      if (daysLeft === null) return '';
+      if (daysLeft < 0) return '旅程已结束 🌴';
+      if (daysLeft === 0) return '今天出发 🌞';
+      if (daysLeft === 1) return '明天出发 ✈️';
+      if (daysLeft <= 7) return `还有 ${daysLeft} 天出发 ✈️`;
+      return `还有 ${daysLeft} 天出发`;
+    }
+
     function normalizeToIsoDate(rawInput) {
       const raw = String(rawInput || '').trim();
       if (!raw) return '';
@@ -4583,6 +4612,14 @@
         datesEl.className = 'travel-card-dates';
         datesEl.textContent = formatTravelDateRange(travel);
 
+        const countdownText = getCountdownText(travel.startDate);
+        let countdownEl = null;
+        if (countdownText) {
+          countdownEl = document.createElement('div');
+          countdownEl.className = 'travel-card-countdown';
+          countdownEl.textContent = countdownText;
+        }
+
         const progress = getTravelItemProgress(travel);
         const progressRow = document.createElement('div');
         progressRow.className = 'travel-card-progress-row';
@@ -4601,6 +4638,7 @@
 
         body.appendChild(header);
         body.appendChild(datesEl);
+        if (countdownEl) body.appendChild(countdownEl);
         body.appendChild(renderTravelCardAvatars(travel));
         body.appendChild(progressRow);
 
