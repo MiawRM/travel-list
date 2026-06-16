@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>旅行清单</title>
+  <title>出游打包神器</title>
 
   <style>
     body {
@@ -64,6 +64,7 @@
       overflow-x: auto;
       padding: 2px 0 6px;
       -webkit-overflow-scrolling: touch;
+      position: relative;
     }
 
     .member-list::-webkit-scrollbar {
@@ -133,6 +134,30 @@
       display: none;
     }
 
+    .member-insert-indicator {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      border-radius: 2px;
+      background: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+      pointer-events: none;
+      z-index: 6;
+      display: none;
+    }
+
+    .member-chip.member-reorder-source {
+      opacity: 0.35;
+    }
+
+    .member-reorder-float {
+      position: fixed;
+      z-index: 10000;
+      pointer-events: none !important;
+      box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2);
+    }
+
     .member-pending-list {
       list-style: none;
       margin: 0 0 12px;
@@ -143,7 +168,10 @@
     }
 
     .member-pending-item {
-      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
       border-bottom: 1px solid #eff6ff;
       color: #ef4444;
       font-size: 17px;
@@ -152,6 +180,38 @@
 
     .member-pending-item:last-child {
       border-bottom: none;
+    }
+
+    .member-pending-toggle {
+      width: 26px;
+      height: 26px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #3b82f6;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+
+    .member-pending-name {
+      color: #2c5c8a;
+    }
+
+    .member-pending-item.done .member-pending-name {
+      color: #3b82f6;
+      text-decoration: line-through;
+      opacity: 0.8;
+    }
+
+    .member-pending-item.done .member-pending-toggle {
+      border-color: #93c5fd;
+      background: #eff6ff;
     }
 
     .member-pending-empty {
@@ -706,12 +766,647 @@
       color: #3b82f6;
     }
 
+    #homePage[hidden],
+    #travelPage[hidden],
+    #memberManagePage[hidden] {
+      display: none !important;
+    }
+
+    #homePage {
+      max-width: 520px;
+      margin: 0 -20px;
+      padding: 0 20px 32px;
+      background: #ffffff;
+      min-height: 100vh;
+    }
+
+    .home-hero {
+      position: relative;
+      margin: -20px -20px 24px;
+      padding: 28px 20px 32px;
+      background: linear-gradient(180deg, #fff7e6 0%, #fffdf8 55%, #ffffff 100%);
+      border-radius: 0 0 28px 28px;
+      overflow: hidden;
+    }
+
+    .home-hero::before {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: 18px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.35) 0%, rgba(251, 191, 36, 0) 70%);
+      pointer-events: none;
+    }
+
+    .home-hero::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+      pointer-events: none;
+    }
+
+    .home-brand {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .home-app-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #3b82f6 0%, #2563eb 100%);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .home-page-title {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 800;
+      color: #1e4f7a;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .home-page-subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: #7c8da3;
+      line-height: 1.45;
+    }
+
+    .home-actions {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .home-action-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 54px;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 18px;
+      background: #ffffff;
+      color: #2563eb;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(30, 79, 122, 0.08);
+      touch-action: manipulation;
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+
+    .home-action-btn:hover {
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.14);
+    }
+
+    .home-action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .home-action-icon {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    #travelsContainer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    #travelsContainer .card.travel-card {
+      margin-bottom: 0;
+    }
+
+    .travel-insert-indicator {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 3px;
+      margin-top: -2px;
+      border-radius: 2px;
+      background: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .travel-card {
+      display: flex;
+      align-items: stretch;
+      gap: 14px;
+      padding: 14px;
+      cursor: pointer;
+      border-radius: 20px;
+      box-shadow: 0 10px 28px rgba(30, 79, 122, 0.08);
+      transition: box-shadow 0.2s ease, transform 0.15s ease;
+    }
+
+    .travel-card:active {
+      box-shadow: 0 6px 18px rgba(30, 79, 122, 0.1);
+    }
+
+    .travel-card-thumb {
+      width: 88px;
+      min-width: 88px;
+      height: 88px;
+      border-radius: 14px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .travel-card-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .travel-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0;
+    }
+
+    .travel-card-name {
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: min(48vw, 220px);
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e4f7a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      -webkit-touch-callout: none;
+      padding: 2px 0;
+      line-height: 1.3;
+    }
+
+    .travel-card-name.placeholder {
+      color: #94b8d8;
+      font-weight: 600;
+    }
+
+    .travel-card-drag-handle {
+      flex: 1 1 0;
+      min-width: 24px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: grab;
+      touch-action: none;
+      pointer-events: auto;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .travel-card-drag-handle:active,
+    .travel-card.travel-reorder-source {
+      cursor: grabbing;
+    }
+
+    .travel-card-dates {
+      font-size: 12px;
+      color: #8b9cb0;
+      margin-bottom: 0;
+      line-height: 1.4;
+    }
+
+    .travel-card-avatars {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      margin-left: 0;
+    }
+
+    .travel-card-avatars .avatar {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+
+    .travel-card-avatars .avatar:first-child {
+      margin-left: 0;
+    }
+
+    .travel-card-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .travel-card-progress-track {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: #edf2f7;
+      overflow: hidden;
+    }
+
+    .travel-card-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+      transition: width 0.25s ease;
+    }
+
+    .travel-card-progress {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2563eb;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .travel-card.travel-reorder-source {
+      opacity: 0.32;
+    }
+
+    .travel-card.travel-reorder-active {
+      box-shadow: 0 12px 32px rgba(59, 130, 246, 0.18);
+    }
+
+    .travel-reorder-float {
+      position: fixed;
+      z-index: 10000;
+      margin: 0;
+      pointer-events: none !important;
+      box-shadow: 0 16px 40px rgba(59, 130, 246, 0.22);
+      opacity: 0.98;
+    }
+
+    .travel-reorder-float * {
+      pointer-events: none !important;
+    }
+
+    .home-footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 13px;
+      color: #3b82f6;
+      line-height: 1.6;
+    }
+
+    .home-footer-link {
+      border: none;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .home-footer-sep {
+      margin: 0 10px;
+      color: #93c5fd;
+    }
+
+    .travel-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 14px;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #3b82f6;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .back-btn:hover {
+      background: #eff6ff;
+    }
+
+    .travel-settings-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(147, 197, 253, 0.7);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      color: #3b82f6;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      touch-action: manipulation;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .travel-settings-btn:hover {
+      background: rgba(239, 246, 255, 0.9);
+    }
+
+    .trip-header {
+      margin-bottom: 20px;
+      padding: 0 20px;
+      text-align: left;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .trip-header .title {
+      margin-bottom: 0;
+      display: block;
+    }
+
+    .trip-date {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #8b9cb0;
+      line-height: 1.3;
+    }
+
+    .action-sheet-overlay {
+      align-items: flex-end;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.24);
+    }
+
+    .action-sheet-overlay .modal {
+      max-width: 540px;
+      border-radius: 18px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .action-sheet-btn {
+      width: 100%;
+      border: none;
+      border-top: 1px solid #eef2f7;
+      background: #ffffff;
+      color: #1f2937;
+      font-size: 18px;
+      padding: 16px 18px;
+      cursor: pointer;
+      text-align: center;
+      touch-action: manipulation;
+    }
+
+    .action-sheet-btn:first-child {
+      border-top: none;
+    }
+
+    .action-sheet-btn-danger {
+      color: #ef4444;
+    }
+
+    .action-sheet-cancel-wrap {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .action-sheet-cancel-btn {
+      width: 100%;
+      border: none;
+      background: #ffffff;
+      color: #374151;
+      font-size: 18px;
+      padding: 16px 18px;
+      cursor: pointer;
+      border-radius: 0 0 18px 18px;
+      touch-action: manipulation;
+    }
+
+    .member-manage-page-title {
+      margin: 0 0 16px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #2c5c8a;
+      text-align: center;
+    }
+
+    .member-manage-rows {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .member-manage-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eff6ff;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .member-manage-row:last-child {
+      border-bottom: none;
+    }
+
+    .member-manage-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 17px;
+      color: #2c5c8a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .member-manage-name-input {
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 16px;
+      color: #2c5c8a;
+      background: #f8fbff;
+      outline: none;
+    }
+
+    .member-manage-delete {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: #ef4444;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 6px;
+      touch-action: manipulation;
+    }
+
+    .member-manage-add {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      background: #ffffff;
+      color: #64748b;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .member-manage-add:hover {
+      border-color: #93c5fd;
+      color: #3b82f6;
+      background: #f8fbff;
+    }
+
+    .date-range-inputs {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .date-range-inputs input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .date-range-sep {
+      color: #64748b;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .date-input-row {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date-input-row input[type="text"] {
+      padding-right: 40px;
+      margin-bottom: 0;
+    }
+
+    .date-picker-btn {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: #3b82f6;
+      font-size: 15px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .date-picker-hidden {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      width: 0;
+      height: 0;
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+
   </style>
 </head>
 
 <body>
 
-  <div class="title trip-title-placeholder" id="tripTitle" role="button" tabindex="0" title="长按编辑旅行名称">给你的旅行取个名字吧～</div>
+  <div id="homePage">
+    <header class="home-hero">
+      <div class="home-brand">
+        <div class="home-app-icon" aria-hidden="true">🧳</div>
+        <div>
+          <h1 class="home-page-title">出游打包神器</h1>
+          <p class="home-page-subtitle">让咱们的游玩无压力，更轻松</p>
+        </div>
+      </div>
+    </header>
+    <div class="home-actions">
+      <button type="button" class="home-action-btn" id="homeNewTravelBtn">
+        <span class="home-action-icon" aria-hidden="true">＋</span>
+        新建旅行
+      </button>
+      <button type="button" class="home-action-btn" id="homeInviteBtn">
+        <span class="home-action-icon" aria-hidden="true">👥</span>
+        邀请好友
+      </button>
+    </div>
+    <div id="travelsContainer"></div>
+    <footer class="home-footer">
+      <button type="button" class="home-footer-link" id="homeRecommendBtn">推荐给朋友</button>
+      <span class="home-footer-sep" aria-hidden="true">|</span>
+      <button type="button" class="home-footer-link" id="homeFeedbackBtn">建议反馈</button>
+    </footer>
+  </div>
+
+  <div id="travelPage" hidden>
+  <div class="travel-toolbar">
+    <button type="button" class="back-btn" id="backToHomeBtn">← 返回</button>
+    <button type="button" class="travel-settings-btn" id="travelSettingsBtn" aria-label="旅行设置">⚙️</button>
+  </div>
+
+  <div class="trip-header" id="tripHeader" role="button" tabindex="0" title="长按编辑旅行信息">
+    <div class="title trip-title-placeholder" id="tripTitle">给你的旅行取个名字吧～</div>
+    <div class="trip-date" id="tripDateDisplay">未设置日期</div>
+  </div>
 
   <div class="card">
     <div class="members-title" id="membersSectionTitle" role="button" tabindex="0" title="长按编辑">也请赐给我们的队伍一个名字</div>
@@ -724,7 +1419,17 @@
     <button type="button" class="add-category-btn" id="addCategoryOpenBtn">＋ 添加分类</button>
   </div>
 
-  <button type="button" class="add-button" id="inviteJoinBtn">邀请加入</button>
+  <button type="button" class="add-button" id="inviteJoinBtn">添加物品</button>
+  </div>
+
+  <div id="memberManagePage" hidden>
+    <div class="travel-toolbar">
+      <button type="button" class="back-btn" id="backFromMemberManageBtn">← 返回</button>
+    </div>
+    <h2 class="member-manage-page-title">管理成员</h2>
+    <div class="member-manage-rows" id="memberManageRows"></div>
+    <button type="button" class="member-manage-add" id="memberManageAddBtn">＊ 新增成员</button>
+  </div>
 
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
@@ -755,22 +1460,24 @@
 
   <div class="modal-overlay" id="addItemModal">
     <div class="modal">
-      <h3 id="addItemModalTitle">添加新物品</h3>
+      <h3 id="addItemModalTitle">新增物品</h3>
 
       <label for="itemNameInput">物品名称</label>
-      <input id="itemNameInput" type="text" placeholder="例如：泳衣" />
+      <input id="itemNameInput" type="text" placeholder="例如：充电器" />
 
       <div id="categorySelectGroup">
-        <label for="categorySelect">分类</label>
+        <label for="categorySelect">所属分类</label>
         <select id="categorySelect"></select>
       </div>
 
-      <label>负责人（可多选）</label>
-      <div class="owner-options" id="ownerOptions"></div>
+      <div id="ownerOptionsGroup">
+        <label>负责人（可多选）</label>
+        <div class="owner-options" id="ownerOptions"></div>
+      </div>
 
       <div class="modal-actions">
         <button class="modal-btn cancel" id="cancelAddBtn">取消</button>
-        <button class="modal-btn confirm" id="confirmAddBtn">确认</button>
+        <button class="modal-btn confirm" id="confirmAddBtn">保存</button>
       </div>
     </div>
   </div>
@@ -899,11 +1606,91 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="travelActionModal">
+    <div class="modal">
+      <h3 id="travelActionTitle">旅行</h3>
+      <div class="member-action-list">
+        <button type="button" class="member-action-btn" id="travelActionRenameBtn">修改旅行名称</button>
+        <button type="button" class="member-action-btn" id="travelActionDatesBtn">修改旅行时间</button>
+        <button type="button" class="member-action-btn member-action-btn-danger" id="travelActionDeleteBtn">删除旅行</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelTravelActionBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editTravelDatesModal">
+    <div class="modal">
+      <h3>修改旅行时间</h3>
+      <label>旅行时间</label>
+      <div class="date-range-inputs">
+        <input id="editTravelStartDateInput" type="date" />
+        <span class="date-range-sep">至</span>
+        <input id="editTravelEndDateInput" type="date" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditTravelDatesBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditTravelDatesBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay action-sheet-overlay" id="travelSettingsModal">
+    <div class="modal">
+      <button type="button" class="action-sheet-btn" id="travelSettingsCoverBtn">更换旅行封面</button>
+      <button type="button" class="action-sheet-btn" id="travelSettingsEditInfoBtn">编辑旅行信息</button>
+      <button type="button" class="action-sheet-btn" id="travelSettingsMembersBtn">管理成员</button>
+      <button type="button" class="action-sheet-btn action-sheet-btn-danger" id="travelSettingsDeleteBtn">删除旅行</button>
+      <div class="action-sheet-cancel-wrap">
+        <button type="button" class="action-sheet-cancel-btn" id="travelSettingsCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay action-sheet-overlay" id="travelCoverModal">
+    <div class="modal">
+      <button type="button" class="action-sheet-btn" id="travelCoverSystemBtn">选择系统封面</button>
+      <button type="button" class="action-sheet-btn" id="travelCoverUploadBtn">上传本地图片</button>
+      <div class="action-sheet-cancel-wrap">
+        <button type="button" class="action-sheet-cancel-btn" id="travelCoverCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="editTravelInfoModal">
+    <div class="modal">
+      <h3>编辑旅行信息</h3>
+      <label for="editTravelInfoNameInput">旅行名称</label>
+      <input id="editTravelInfoNameInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
+      <label>旅行时间</label>
+      <div class="date-range-inputs">
+        <div class="date-input-row">
+          <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" />
+          <button type="button" class="date-picker-btn" id="editTravelInfoStartDatePickerBtn" aria-label="选择开始日期">📅</button>
+          <input id="editTravelInfoStartDatePicker" class="date-picker-hidden" type="date" tabindex="-1" aria-hidden="true" />
+        </div>
+        <span class="date-range-sep">至</span>
+        <div class="date-input-row">
+          <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" />
+          <button type="button" class="date-picker-btn" id="editTravelInfoEndDatePickerBtn" aria-label="选择结束日期">📅</button>
+          <input id="editTravelInfoEndDatePicker" class="date-picker-hidden" type="date" tabindex="-1" aria-hidden="true" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="cancelEditTravelInfoBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="saveEditTravelInfoBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const addButton = document.getElementById('inviteJoinBtn');
     const inviteJoinModal = document.getElementById('inviteJoinModal');
     const closeInviteJoinBtn = document.getElementById('closeInviteJoinBtn');
+    const tripHeaderEl = document.getElementById('tripHeader');
     const tripTitleEl = document.getElementById('tripTitle');
+    const tripDateDisplayEl = document.getElementById('tripDateDisplay');
     const editTripTitleModal = document.getElementById('editTripTitleModal');
     const editTripTitleInput = document.getElementById('editTripTitleInput');
     const cancelEditTripTitleBtn = document.getElementById('cancelEditTripTitleBtn');
@@ -922,6 +1709,7 @@
     const itemNameInput = document.getElementById('itemNameInput');
     const categorySelect = document.getElementById('categorySelect');
     const categorySelectGroup = document.getElementById('categorySelectGroup');
+    const ownerOptionsGroup = document.getElementById('ownerOptionsGroup');
     const ownerOptions = document.getElementById('ownerOptions');
     const cancelAddBtn = document.getElementById('cancelAddBtn');
     const confirmAddBtn = document.getElementById('confirmAddBtn');
@@ -939,6 +1727,10 @@
     const addMemberNameInput = document.getElementById('addMemberNameInput');
     const cancelAddMemberBtn = document.getElementById('cancelAddMemberBtn');
     const saveAddMemberBtn = document.getElementById('saveAddMemberBtn');
+    const memberManagePage = document.getElementById('memberManagePage');
+    const memberManageRows = document.getElementById('memberManageRows');
+    const backFromMemberManageBtn = document.getElementById('backFromMemberManageBtn');
+    const memberManageAddBtn = document.getElementById('memberManageAddBtn');
     const memberList = document.getElementById('memberList');
     const memberPendingModal = document.getElementById('memberPendingModal');
     const memberPendingTitle = document.getElementById('memberPendingTitle');
@@ -966,8 +1758,49 @@
     const confirmDeleteMessage = document.getElementById('confirmDeleteMessage');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const homePage = document.getElementById('homePage');
+    const travelPage = document.getElementById('travelPage');
+    const travelsContainer = document.getElementById('travelsContainer');
+    const homeNewTravelBtn = document.getElementById('homeNewTravelBtn');
+    const homeInviteBtn = document.getElementById('homeInviteBtn');
+    const homeRecommendBtn = document.getElementById('homeRecommendBtn');
+    const homeFeedbackBtn = document.getElementById('homeFeedbackBtn');
+    const backToHomeBtn = document.getElementById('backToHomeBtn');
+    const travelActionModal = document.getElementById('travelActionModal');
+    const travelActionTitle = document.getElementById('travelActionTitle');
+    const travelActionRenameBtn = document.getElementById('travelActionRenameBtn');
+    const travelActionDatesBtn = document.getElementById('travelActionDatesBtn');
+    const travelActionDeleteBtn = document.getElementById('travelActionDeleteBtn');
+    const cancelTravelActionBtn = document.getElementById('cancelTravelActionBtn');
+    const editTravelDatesModal = document.getElementById('editTravelDatesModal');
+    const editTravelStartDateInput = document.getElementById('editTravelStartDateInput');
+    const editTravelEndDateInput = document.getElementById('editTravelEndDateInput');
+    const cancelEditTravelDatesBtn = document.getElementById('cancelEditTravelDatesBtn');
+    const saveEditTravelDatesBtn = document.getElementById('saveEditTravelDatesBtn');
+    const travelSettingsBtn = document.getElementById('travelSettingsBtn');
+    const travelSettingsModal = document.getElementById('travelSettingsModal');
+    const travelSettingsCoverBtn = document.getElementById('travelSettingsCoverBtn');
+    const travelSettingsEditInfoBtn = document.getElementById('travelSettingsEditInfoBtn');
+    const travelSettingsMembersBtn = document.getElementById('travelSettingsMembersBtn');
+    const travelSettingsDeleteBtn = document.getElementById('travelSettingsDeleteBtn');
+    const travelSettingsCancelBtn = document.getElementById('travelSettingsCancelBtn');
+    const travelCoverModal = document.getElementById('travelCoverModal');
+    const travelCoverSystemBtn = document.getElementById('travelCoverSystemBtn');
+    const travelCoverUploadBtn = document.getElementById('travelCoverUploadBtn');
+    const travelCoverCancelBtn = document.getElementById('travelCoverCancelBtn');
+    const editTravelInfoModal = document.getElementById('editTravelInfoModal');
+    const editTravelInfoNameInput = document.getElementById('editTravelInfoNameInput');
+    const editTravelInfoStartDateInput = document.getElementById('editTravelInfoStartDateInput');
+    const editTravelInfoEndDateInput = document.getElementById('editTravelInfoEndDateInput');
+    const editTravelInfoStartDatePickerBtn = document.getElementById('editTravelInfoStartDatePickerBtn');
+    const editTravelInfoEndDatePickerBtn = document.getElementById('editTravelInfoEndDatePickerBtn');
+    const editTravelInfoStartDatePicker = document.getElementById('editTravelInfoStartDatePicker');
+    const editTravelInfoEndDatePicker = document.getElementById('editTravelInfoEndDatePicker');
+    const cancelEditTravelInfoBtn = document.getElementById('cancelEditTravelInfoBtn');
+    const saveEditTravelInfoBtn = document.getElementById('saveEditTravelInfoBtn');
 
     const STORAGE_KEY = 'travel-checklist-items-v1';
+    const TRAVELS_STORAGE_KEY = 'travel-checklist-travels-v1';
     const MEMBERS_STORAGE_KEY = 'travel-checklist-members-v1';
     const CATEGORIES_STORAGE_KEY = 'travel-checklist-categories-v1';
     const CATEGORY_COLLAPSE_STORAGE_KEY = 'travel-checklist-category-collapse-v1';
@@ -1030,12 +1863,18 @@
       '#10b981', '#14b8a6', '#f59e0b', '#eab308'
     ];
 
+    let travels = [];
+    const uiState = { page: 'home', currentTravelId: null };
     let checklistItems = [];
     let members = [];
     let categories = [];
     let tripTitle = '';
     let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
     let collapsedCategories = {};
+    let travelActionTargetId = null;
+    let editingTravelDatesId = null;
+    let editingTravelNameId = null;
+    let editingTravelInfoId = null;
     let editingItemId = null;
     let editingMemberId = null;
     let editingCategoryOldName = null;
@@ -1047,7 +1886,8 @@
     const UI_LONG_PRESS_MOVE_CANCEL_PX = 10;
     const DELETE_COPY = {
       default: { title: '确认删除？', message: '删除后无法恢复' },
-      member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' }
+      member: { title: '删除成员？', message: '删除后会同步移除该成员负责的所有物品关系' },
+      travel: { title: '删除旅行？', message: '删除后该旅行的所有清单数据将无法恢复' }
     };
     const categoryCards = {};
 
@@ -1124,7 +1964,7 @@
     }
 
     function formatAddItemModalTitle(categoryName) {
-      if (!categoryName) return '添加新物品';
+      if (!categoryName) return '新增物品';
       return `${iconForCategoryName(categoryName)} 添加到${categoryName}`;
     }
 
@@ -1137,11 +1977,72 @@
       return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
     }
 
+    function getMemberColorByName(memberName, fallbackName = '') {
+      return colorForName(memberName || fallbackName);
+    }
+
+    function getTravelById(travelId) {
+      return travels.find(t => t.id === travelId) || null;
+    }
+
+    function getCurrentTravel() {
+      return getTravelById(uiState.currentTravelId);
+    }
+
+    function sortTravelsByOrder() {
+      travels.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+
+    function getSortedTravels() {
+      return [...travels].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+
+    function syncGlobalsToCurrentTravel() {
+      const travel = getCurrentTravel();
+      if (!travel) return;
+      travel.name = tripTitle;
+      travel.membersSectionTitle = membersSectionTitle;
+      travel.members = members;
+      travel.categories = categories;
+      travel.items = checklistItems;
+      travel.collapsedCategories = { ...collapsedCategories };
+    }
+
+    function syncTravelToGlobals(travel) {
+      if (!travel) return;
+      tripTitle = travel.name || '';
+      membersSectionTitle = travel.membersSectionTitle || DEFAULT_MEMBERS_SECTION_TITLE;
+      members = Array.isArray(travel.members) ? travel.members.map(m => ({
+        id: m.id || createId(),
+        name: String(m.name || '').trim(),
+        avatarUrl: (typeof m.avatarUrl === 'string') ? m.avatarUrl.trim() : ''
+      })).filter(m => m.name) : [];
+      categories = Array.isArray(travel.categories)
+        ? [...new Set(travel.categories.map(s => String(s).trim()).filter(Boolean))]
+        : [];
+      checklistItems = Array.isArray(travel.items) ? travel.items : [];
+      checklistItems.forEach(normalizeItemCompletion);
+      collapsedCategories = {};
+      if (travel.collapsedCategories && typeof travel.collapsedCategories === 'object') {
+        Object.keys(travel.collapsedCategories).forEach(cat => {
+          if (travel.collapsedCategories[cat]) collapsedCategories[cat] = true;
+        });
+      }
+    }
+
+    function saveTravels() {
+      localStorage.setItem(TRAVELS_STORAGE_KEY, JSON.stringify(travels));
+    }
+
     function saveChecklistItems() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(checklistItems));
     }
 
     function saveMembers() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(members));
     }
 
@@ -1158,6 +2059,8 @@
     }
 
     function saveTripTitle() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(TRIP_TITLE_STORAGE_KEY, tripTitle.trim());
     }
 
@@ -1178,13 +2081,36 @@
     }
 
     function renderTripTitle() {
+      const currentTravel = getCurrentTravel();
       const unset = isTripTitleUnset();
       tripTitleEl.textContent = getDisplayTripTitle();
       tripTitleEl.classList.toggle('trip-title-placeholder', unset);
+      tripDateDisplayEl.textContent = currentTravel ? formatTravelDateRange(currentTravel) : '未设置日期';
       document.title = unset ? '旅行清单' : tripTitle.trim();
     }
 
+    function toDotDateLabel(isoDate) {
+      const raw = String(isoDate || '').trim();
+      if (!raw) return '';
+      const parts = raw.split('-');
+      if (parts.length === 3) {
+        const y = parts[0];
+        const m = String(Number(parts[1]) || '').padStart(2, '0');
+        const d = String(Number(parts[2]) || '').padStart(2, '0');
+        if (y && m !== '00' && d !== '00') return `${y}.${m}.${d}`;
+      }
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, '0');
+        const d = String(parsed.getDate()).padStart(2, '0');
+        return `${y}.${m}.${d}`;
+      }
+      return raw;
+    }
+
     function openEditTripTitleModal() {
+      editingTravelNameId = null;
       editTripTitleInput.value = isTripTitleUnset() ? '' : tripTitle.trim();
       editTripTitleModal.classList.add('show');
       editTripTitleInput.focus();
@@ -1192,12 +2118,24 @@
     }
 
     function closeEditTripTitleModal() {
+      editingTravelNameId = null;
       editTripTitleModal.classList.remove('show');
     }
 
     function saveEditedTripTitle() {
       const nextTitle = editTripTitleInput.value.trim();
       const normalized = nextTitle && nextTitle !== TRIP_TITLE_PLACEHOLDER ? nextTitle : '';
+      if (editingTravelNameId) {
+        const travel = getTravelById(editingTravelNameId);
+        if (travel && normalized !== (travel.name || '')) {
+          travel.name = normalized;
+          saveTravels();
+          renderHomePage();
+        }
+        editingTravelNameId = null;
+        closeEditTripTitleModal();
+        return;
+      }
       if (normalized !== tripTitle) {
         tripTitle = normalized;
         saveTripTitle();
@@ -1207,6 +2145,8 @@
     }
 
     function saveMembersSectionTitle() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(MEMBERS_SECTION_TITLE_STORAGE_KEY, membersSectionTitle);
     }
 
@@ -1315,10 +2255,14 @@
     }
 
     function saveCategories() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
     }
 
     function saveCategoryCollapseState() {
+      syncGlobalsToCurrentTravel();
+      saveTravels();
       localStorage.setItem(CATEGORY_COLLAPSE_STORAGE_KEY, JSON.stringify(collapsedCategories));
     }
 
@@ -1999,7 +2943,8 @@
           if (Array.isArray(parsed) && parsed.length) {
             members = parsed.map(m => ({
               id: m.id || createId(),
-              name: String(m.name || '').trim()
+              name: String(m.name || '').trim(),
+              avatarUrl: (typeof m.avatarUrl === 'string') ? m.avatarUrl.trim() : ''
             })).filter(m => m.name);
             if (members.length) {
               saveMembers();
@@ -2010,7 +2955,7 @@
       } catch (e) {
         members = [];
       }
-      members = ['我', '小A', '小B'].map(name => ({ id: createId(), name }));
+      members = ['我', '小A', '小B'].map(name => ({ id: createId(), name, avatarUrl: '' }));
       saveMembers();
     }
 
@@ -2021,8 +2966,8 @@
         chip.type = 'button';
         chip.className = 'member-chip';
         chip.dataset.memberId = m.id;
-        chip.setAttribute('aria-label', `${m.name}，点击查看待准备物品，长按更多操作`);
-        chip.title = '点击查看待准备物品，长按更多操作';
+        chip.setAttribute('aria-label', `${m.name}，点击查看准备情况，长按拖动排序`);
+        chip.title = '点击查看准备情况；长按拖动排序';
         const av = document.createElement('div');
         av.className = 'member-avatar';
         av.style.background = colorForName(m.name);
@@ -2032,16 +2977,13 @@
         nm.textContent = m.name;
         chip.appendChild(av);
         chip.appendChild(nm);
-        bindUiLongPress(chip, {
-          onTap: () => openMemberPendingModal(m.id),
-          onLongPress: () => openMemberActionModal(m.id)
-        });
         memberList.appendChild(chip);
       });
       const addChip = document.createElement('button');
       addChip.type = 'button';
       addChip.className = 'member-chip member-add-chip';
       addChip.setAttribute('aria-label', '添加成员');
+      addChip.title = '新增成员';
       const addAv = document.createElement('div');
       addAv.className = 'member-avatar';
       addAv.textContent = '＋';
@@ -2051,7 +2993,182 @@
         openAddMemberModal();
       });
       memberList.appendChild(addChip);
+      memberStripReorder.bindHandles();
     }
+
+    const MEMBER_STRIP_REORDER_LONG_PRESS_MS = 500;
+    const MEMBER_STRIP_REORDER_MOVE_THRESHOLD = 10;
+
+    const memberStripReorder = (function () {
+      let session = null;
+      let insertIndicator = null;
+
+      function getMemberChips() {
+        return [...memberList.querySelectorAll('.member-chip[data-member-id]')];
+      }
+
+      function ensureIndicator() {
+        if (insertIndicator && insertIndicator.isConnected) return;
+        insertIndicator = document.createElement('div');
+        insertIndicator.className = 'member-insert-indicator';
+        memberList.appendChild(insertIndicator);
+      }
+
+      function findInsertIndex(clientX, sourceChip) {
+        const chips = getMemberChips();
+        for (let i = 0; i < chips.length; i++) {
+          const chip = chips[i];
+          if (chip === sourceChip) continue;
+          const rect = chip.getBoundingClientRect();
+          if (clientX < rect.left + rect.width / 2) return i;
+        }
+        return chips.length;
+      }
+
+      function updateIndicator(insertIndex) {
+        if (!insertIndicator) return;
+        const chips = getMemberChips();
+        if (!chips.length) {
+          insertIndicator.style.display = 'none';
+          return;
+        }
+        let left;
+        if (insertIndex <= 0) left = chips[0].offsetLeft;
+        else if (insertIndex >= chips.length) left = chips[chips.length - 1].offsetLeft + chips[chips.length - 1].offsetWidth;
+        else left = chips[insertIndex].offsetLeft;
+        insertIndicator.style.left = `${left}px`;
+        insertIndicator.style.display = 'block';
+      }
+
+      function applyReorder(fromIndex, insertIndex) {
+        if (fromIndex < 0 || members.length < 2) return;
+        if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
+        const next = members.slice();
+        const [picked] = next.splice(fromIndex, 1);
+        if (insertIndex > fromIndex) insertIndex -= 1;
+        next.splice(insertIndex, 0, picked);
+        members = next;
+        saveMembers();
+        syncAllMembersItems();
+        saveChecklistItems();
+        renderMemberList();
+        renderOwnerOptions();
+        renderChecklistItems();
+        renderHomePage();
+        renderMemberManagePage();
+      }
+
+      function cleanup(apply) {
+        const s = session;
+        session = null;
+        document.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onEnd, true);
+        window.removeEventListener('pointercancel', onEnd, true);
+        if (!s) return;
+        if (s.longPressTimer) clearTimeout(s.longPressTimer);
+        if (s.floatEl && s.floatEl.isConnected) s.floatEl.remove();
+        if (s.chip) s.chip.classList.remove('member-reorder-source');
+        if (insertIndicator) insertIndicator.style.display = 'none';
+        if (apply && s.dragging) applyReorder(s.fromIndex, s.insertIndex);
+      }
+
+      function startDrag() {
+        if (!session || session.dragging) return;
+        const s = session;
+        s.dragging = true;
+        s.fromIndex = members.findIndex(m => m.id === s.memberId);
+        if (s.fromIndex < 0) return;
+        s.chip.classList.add('member-reorder-source');
+        const rect = s.chip.getBoundingClientRect();
+        const floatEl = s.chip.cloneNode(true);
+        floatEl.classList.add('member-reorder-float');
+        floatEl.style.width = `${rect.width}px`;
+        floatEl.style.left = `${rect.left}px`;
+        floatEl.style.top = `${rect.top}px`;
+        document.body.appendChild(floatEl);
+        s.floatEl = floatEl;
+        s.offsetX = s.lastX - rect.left;
+        s.offsetY = s.lastY - rect.top;
+        s.insertIndex = findInsertIndex(s.lastX, s.chip);
+        updateIndicator(s.insertIndex);
+      }
+
+      function onMove(event) {
+        if (!session || event.pointerId !== session.pointerId) return;
+        session.lastX = event.clientX;
+        session.lastY = event.clientY;
+        if (!session.dragging) {
+          const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
+          if (distance > MEMBER_STRIP_REORDER_MOVE_THRESHOLD && session.longPressTimer) {
+            clearTimeout(session.longPressTimer);
+            session.longPressTimer = null;
+          }
+          return;
+        }
+        event.preventDefault();
+        session.insertIndex = findInsertIndex(event.clientX, session.chip);
+        updateIndicator(session.insertIndex);
+        if (session.floatEl) {
+          session.floatEl.style.left = `${event.clientX - session.offsetX}px`;
+          session.floatEl.style.top = `${event.clientY - session.offsetY}px`;
+        }
+      }
+
+      function onEnd(event) {
+        if (!session || (event.pointerId != null && event.pointerId !== session.pointerId)) return;
+        const dragged = !!session.dragging;
+        const memberId = session.memberId;
+        const wasTap = !dragged && !session.longPressTriggered;
+        cleanup(true);
+        if (dragged) return;
+        if (wasTap && memberId) openMemberPendingModal(memberId);
+      }
+
+      function onPointerDown(event) {
+        if (members.length < 2) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        const chip = event.currentTarget;
+        if (session) cleanup(false);
+        ensureIndicator();
+        session = {
+          pointerId: event.pointerId,
+          chip,
+          memberId: chip.dataset.memberId || '',
+          startX: event.clientX,
+          startY: event.clientY,
+          lastX: event.clientX,
+          lastY: event.clientY,
+          fromIndex: -1,
+          insertIndex: 0,
+          dragging: false,
+          longPressTriggered: false,
+          longPressTimer: window.setTimeout(() => {
+            if (session && !session.dragging) {
+              session.longPressTriggered = true;
+              startDrag();
+            }
+          }, MEMBER_STRIP_REORDER_LONG_PRESS_MS),
+          floatEl: null,
+          offsetX: 0,
+          offsetY: 0
+        };
+        document.addEventListener('pointermove', onMove, { passive: false });
+        window.addEventListener('pointerup', onEnd, true);
+        window.addEventListener('pointercancel', onEnd, true);
+      }
+
+      function bindHandles() {
+        ensureIndicator();
+        getMemberChips().forEach(chip => {
+          chip.replaceWith(chip.cloneNode(true));
+        });
+        getMemberChips().forEach(chip => {
+          chip.addEventListener('pointerdown', onPointerDown);
+        });
+      }
+
+      return { bindHandles, forceReset: () => cleanup(false) };
+    })();
 
     function removeMemberById(memberId) {
       const idx = members.findIndex(m => m.id === memberId);
@@ -2074,6 +3191,8 @@
       renderMemberList();
       renderOwnerOptions();
       renderChecklistItems();
+      renderHomePage();
+      renderMemberManagePage();
     }
 
     function isOwnerPendingForItem(item, ownerName) {
@@ -2097,17 +3216,40 @@
     }
 
     function renderMemberPendingList(memberName) {
-      const pending = sortItemsByCategoryOrder(getMemberPendingItems(memberName));
+      const pending = sortItemsByCategoryOrder(
+        checklistItems.filter(item => (item.owners || []).includes(memberName))
+      );
       memberPendingList.innerHTML = '';
       if (!pending.length) {
         memberPendingEmpty.hidden = false;
+        memberPendingEmpty.textContent = '✓ 已准备完成';
         return;
       }
-      memberPendingEmpty.hidden = true;
+      const hasPending = pending.some(item => isOwnerPendingForItem(item, memberName));
+      memberPendingEmpty.hidden = !hasPending;
+      memberPendingEmpty.textContent = hasPending ? '还未全部准备完成' : '✓ 已准备完成';
+      memberPendingTitle.textContent = hasPending ? `${memberName} 还没准备` : `${memberName} 已准备完成`;
       pending.forEach(item => {
         const li = document.createElement('li');
         li.className = 'member-pending-item';
-        li.textContent = `☐ ${item.name}`;
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'member-pending-toggle';
+        const done = !isOwnerPendingForItem(item, memberName);
+        toggleBtn.textContent = done ? '☑' : '□';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'member-pending-name';
+        nameSpan.textContent = item.name;
+        if (done) li.classList.add('done');
+        toggleBtn.addEventListener('click', () => {
+          toggleOwnerCompletion(item, memberName);
+          saveChecklistItems();
+          renderChecklistItems();
+          renderHomePage();
+          renderMemberPendingList(memberName);
+        });
+        li.appendChild(toggleBtn);
+        li.appendChild(nameSpan);
         memberPendingList.appendChild(li);
       });
     }
@@ -2115,8 +3257,9 @@
     function openMemberPendingModal(memberId) {
       const member = members.find(m => m.id === memberId);
       if (!member) return;
-      memberPendingTitle.textContent = `${member.name} 还没准备`;
       renderMemberPendingList(member.name);
+      const hasPending = getMemberPendingItems(member.name).length > 0;
+      memberPendingTitle.textContent = hasPending ? `${member.name} 还没准备` : `${member.name} 已准备完成`;
       memberPendingModal.classList.add('show');
     }
 
@@ -2186,7 +3329,9 @@
         renderMemberList();
         renderOwnerOptions();
         renderChecklistItems();
+        renderHomePage();
       }
+      if (uiState.page === 'members') renderMemberManagePage();
       closeEditMemberModal();
     }
 
@@ -2331,18 +3476,22 @@
         addMemberNameInput.select();
         return;
       }
-      members.push({ id: createId(), name });
+      members.push({ id: createId(), name, avatarUrl: '' });
       saveMembers();
       syncAllMembersItems();
       saveChecklistItems();
       renderMemberList();
       renderOwnerOptions();
       renderChecklistItems();
+      renderHomePage();
+      renderMemberManagePage();
       closeAddMemberModal();
     }
 
     cancelAddMemberBtn.addEventListener('click', closeAddMemberModal);
     saveAddMemberBtn.addEventListener('click', addMember);
+    backFromMemberManageBtn.addEventListener('click', leaveMemberManage);
+    memberManageAddBtn.addEventListener('click', openAddMemberModal);
     addMemberNameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addMember();
     });
@@ -2366,7 +3515,7 @@
     memberActionDeleteBtn.addEventListener('click', () => {
       const memberId = memberActionTargetId;
       closeMemberActionModal();
-      if (memberId) openConfirmDeleteMember(memberId);
+      if (memberId) openConfirmDeleteMemberByName(memberId);
     });
 
     cancelEditMemberBtn.addEventListener('click', closeEditMemberModal);
@@ -2450,7 +3599,9 @@
 
     function openModal(categoryName = null) {
       addItemTargetCategory = categoryName || null;
-      categorySelectGroup.hidden = !!categoryName;
+      const fromCategoryBtn = !!categoryName;
+      categorySelectGroup.hidden = fromCategoryBtn;
+      if (ownerOptionsGroup) ownerOptionsGroup.hidden = !fromCategoryBtn;
       if (addItemModalTitle) {
         addItemModalTitle.textContent = formatAddItemModalTitle(categoryName);
       }
@@ -2468,8 +3619,9 @@
     function closeModal() {
       addItemTargetCategory = null;
       categorySelectGroup.hidden = false;
+      if (ownerOptionsGroup) ownerOptionsGroup.hidden = true;
       if (addItemModalTitle) {
-        addItemModalTitle.textContent = '添加新物品';
+        addItemModalTitle.textContent = '新增物品';
       }
       modal.classList.remove('show');
     }
@@ -2568,7 +3720,7 @@
         const avatar = document.createElement('div');
         avatar.className = 'avatar';
         avatar.dataset.ownerName = ownerName;
-        avatar.style.background = colorForName(ownerName);
+        avatar.style.background = getMemberColorByName(ownerName, ownerName);
         avatar.textContent = (ownerName || '').charAt(0) || '?';
         avatar.title = `${ownerName}（点击标记完成）`;
         avatar.setAttribute('role', 'button');
@@ -2641,13 +3793,26 @@
     function addItemToCategory() {
       const name = itemNameInput.value.trim();
       const category = addItemTargetCategory || categorySelect.value;
-      const { owners, isAllMembers } = readOwnersFromContainer(ownerOptions);
+      let owners;
+      let isAllMembers;
 
       if (!name) {
         itemNameInput.focus();
         return;
       }
-      if (!owners.length) return;
+      if (!category) {
+        categorySelect.focus();
+        return;
+      }
+
+      if (ownerOptionsGroup && ownerOptionsGroup.hidden) {
+        if (!members.length) return;
+        owners = [members[0].name];
+        isAllMembers = false;
+      } else {
+        ({ owners, isAllMembers } = readOwnersFromContainer(ownerOptions));
+        if (!owners.length) return;
+      }
 
       const card = categoryCards[category];
       if (!card) return;
@@ -2663,6 +3828,9 @@
       });
       saveChecklistItems();
       renderChecklistItems();
+      syncGlobalsToCurrentTravel();
+      saveTravels();
+      renderHomePage();
       closeModal();
     }
 
@@ -2672,7 +3840,11 @@
       if (event.target === confirmDeleteModal) closeConfirmDelete();
     });
 
-    addButton.addEventListener('click', openInviteJoinModal);
+    addButton.addEventListener('click', () => openModal());
+    homeNewTravelBtn.addEventListener('click', createNewTravel);
+    homeInviteBtn.addEventListener('click', openInviteJoinModal);
+    homeRecommendBtn.addEventListener('click', openInviteJoinModal);
+    homeFeedbackBtn.addEventListener('click', openInviteJoinModal);
     closeInviteJoinBtn.addEventListener('click', closeInviteJoinModal);
     inviteJoinModal.addEventListener('click', (event) => {
       if (event.target === inviteJoinModal) closeInviteJoinModal();
@@ -2767,13 +3939,13 @@
       openEditOwnersModal(item.dataset.itemId);
     });
 
-    bindUiLongPress(tripTitleEl, {
-      onLongPress: openEditTripTitleModal
+    bindUiLongPress(tripHeaderEl, {
+      onLongPress: () => openEditTravelInfoModal(uiState.currentTravelId)
     });
-    tripTitleEl.addEventListener('keydown', (event) => {
+    tripHeaderEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        openEditTripTitleModal();
+        openEditTravelInfoModal(uiState.currentTravelId);
       }
     });
     cancelEditTripTitleBtn.addEventListener('click', closeEditTripTitleModal);
@@ -2812,22 +3984,1044 @@
       if (event.target === editCategoryModal) closeEditCategoryModal();
     });
 
-    loadMembers();
-    loadTripTitle();
-    renderTripTitle();
-    loadMembersSectionTitle();
-    renderMembersSectionTitle();
-    renderMemberList();
-    loadCategories();
-    loadCategoryCollapseState();
-    renderCategoryCards();
-    loadChecklistItems();
-    if (mergeCategoriesFromItems()) {
-      renderCategoryCards();
+    function isTravelNameUnset(name) {
+      return !String(name || '').trim();
     }
-    syncCategorySelect();
-    renderOwnerOptions();
-    renderChecklistItems();
+
+    function getDisplayTravelName(travel) {
+      return isTravelNameUnset(travel.name) ? TRIP_TITLE_PLACEHOLDER : travel.name.trim();
+    }
+
+
+    function formatTravelDateRange(travel) {
+      const start = String(travel.startDate || '').trim();
+      const end = String(travel.endDate || '').trim();
+      const startLabel = toDotDateLabel(start);
+      const endLabel = toDotDateLabel(end);
+      if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+      if (startLabel) return `${startLabel} 起`;
+      if (endLabel) return `至 ${endLabel}`;
+      return '未设置日期';
+    }
+
+    function normalizeToIsoDate(rawInput) {
+      const raw = String(rawInput || '').trim();
+      if (!raw) return '';
+      let y = 0;
+      let m = 0;
+      let d = 0;
+      if (/^\d{8}$/.test(raw)) {
+        y = Number(raw.slice(0, 4));
+        m = Number(raw.slice(4, 6));
+        d = Number(raw.slice(6, 8));
+      } else {
+        const normalized = raw.replace(/[./]/g, '-');
+        const match = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (!match) return '';
+        y = Number(match[1]);
+        m = Number(match[2]);
+        d = Number(match[3]);
+      }
+      if (!y || m < 1 || m > 12 || d < 1 || d > 31) return '';
+      const dt = new Date(y, m - 1, d);
+      if (
+        Number.isNaN(dt.getTime()) ||
+        dt.getFullYear() !== y ||
+        dt.getMonth() + 1 !== m ||
+        dt.getDate() !== d
+      ) return '';
+      return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    function normalizeDateInputField(textInput, pickerInput) {
+      const normalized = normalizeToIsoDate(textInput.value);
+      textInput.value = normalized;
+      if (pickerInput) pickerInput.value = normalized;
+      return normalized;
+    }
+
+    function openDatePickerInput(pickerInput) {
+      if (!pickerInput) return;
+      if (typeof pickerInput.showPicker === 'function') {
+        pickerInput.showPicker();
+      } else {
+        pickerInput.click();
+      }
+    }
+
+    function getTravelItemProgress(travel) {
+      const items = Array.isArray(travel.items) ? travel.items : [];
+      const total = items.length;
+      if (!total) return { completed: 0, total: 0, percent: 0 };
+      const completed = items.filter(item => isItemAllOwnersComplete(item)).length;
+      return {
+        completed,
+        total,
+        percent: Math.round((completed / total) * 100)
+      };
+    }
+
+    function createDefaultTravelData(overrides = {}) {
+      const seedItems = getDefaultSeedItems();
+      const seedMembers = ['我', '小A', '小B'].map(name => ({ id: createId(), name }));
+      return {
+        id: createId(),
+        name: '',
+        startDate: '',
+        endDate: '',
+        order: travels.length,
+        membersSectionTitle: DEFAULT_MEMBERS_SECTION_TITLE,
+        members: seedMembers,
+        categories: [...DEFAULT_CATEGORY_ORDER],
+        items: seedItems,
+        collapsedCategories: {},
+        ...overrides
+      };
+    }
+
+    function loadLegacyDataForMigration() {
+      loadMembers();
+      loadTripTitle();
+      loadMembersSectionTitle();
+      loadCategories();
+      loadCategoryCollapseState();
+      loadChecklistItems();
+      mergeCategoriesFromItems();
+    }
+
+    function migrateLegacyStorageToTravels() {
+      loadLegacyDataForMigration();
+      const travel = createDefaultTravelData({
+        name: tripTitle,
+        membersSectionTitle,
+        members: members.map(m => ({ ...m })),
+        categories: [...categories],
+        items: checklistItems.map(item => ({ ...item })),
+        collapsedCategories: { ...collapsedCategories },
+        order: 0
+      });
+      travels = [travel];
+      saveTravels();
+    }
+
+    function normalizeTravelRecord(raw, index) {
+      const travel = createDefaultTravelData({
+        id: raw.id || createId(),
+        name: raw.name || '',
+        startDate: raw.startDate || '',
+        endDate: raw.endDate || '',
+        order: typeof raw.order === 'number' ? raw.order : index,
+        membersSectionTitle: raw.membersSectionTitle || DEFAULT_MEMBERS_SECTION_TITLE,
+        members: Array.isArray(raw.members) ? raw.members : [],
+        categories: Array.isArray(raw.categories) && raw.categories.length ? raw.categories : [...DEFAULT_CATEGORY_ORDER],
+        items: Array.isArray(raw.items) ? raw.items : [],
+        collapsedCategories: raw.collapsedCategories && typeof raw.collapsedCategories === 'object' ? raw.collapsedCategories : {}
+      });
+      travel.members = travel.members.map(m => ({
+        id: m.id || createId(),
+        name: String(m.name || '').trim(),
+        avatarUrl: (typeof m.avatarUrl === 'string') ? m.avatarUrl.trim() : ''
+      })).filter(m => m.name);
+      if (!travel.members.length) {
+        travel.members = ['我', '小A', '小B'].map(name => ({ id: createId(), name, avatarUrl: '' }));
+      }
+      travel.categories = [...new Set(travel.categories.map(s => String(s).trim()).filter(Boolean))];
+      if (!travel.categories.length) travel.categories = [...DEFAULT_CATEGORY_ORDER];
+      travel.items.forEach(normalizeItemCompletion);
+      return travel;
+    }
+
+    function loadTravels() {
+      try {
+        const raw = localStorage.getItem(TRAVELS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) {
+            travels = parsed.map((t, i) => normalizeTravelRecord(t, i));
+            sortTravelsByOrder();
+            travels.forEach((t, i) => { t.order = i; });
+            saveTravels();
+            return;
+          }
+        }
+      } catch (e) {
+        travels = [];
+      }
+      migrateLegacyStorageToTravels();
+    }
+
+    function setPage(page, travelId = null) {
+      if (page === 'travel') {
+        if (!travelId || !getTravelById(travelId)) return;
+        if (uiState.page === 'travel' && uiState.currentTravelId) {
+          syncGlobalsToCurrentTravel();
+          saveTravels();
+        }
+        uiState.page = 'travel';
+        uiState.currentTravelId = travelId;
+        const travel = getCurrentTravel();
+        syncTravelToGlobals(travel);
+        closeTravelSettingsModal();
+        closeTravelCoverModal();
+        closeEditTravelInfoModal();
+        leaveMemberManage();
+        homePage.hidden = true;
+        travelPage.hidden = false;
+        memberManagePage.hidden = true;
+        addButton.hidden = false;
+        renderTripTitle();
+        renderMembersSectionTitle();
+        renderMemberList();
+        renderCategoryCards();
+        syncCategorySelect();
+        renderOwnerOptions();
+        renderChecklistItems();
+        document.title = isTripTitleUnset() ? '旅行清单' : tripTitle.trim();
+        return;
+      }
+
+      if ((uiState.page === 'travel' || uiState.page === 'members') && uiState.currentTravelId) {
+        syncGlobalsToCurrentTravel();
+        saveTravels();
+      }
+      uiState.page = 'home';
+      uiState.currentTravelId = null;
+      categoryListReorder.forceReset();
+      memberStripReorder.forceReset();
+      closeTravelSettingsModal();
+      closeTravelCoverModal();
+      closeEditTravelInfoModal();
+      leaveMemberManage();
+      memberManagePage.hidden = true;
+      homePage.hidden = false;
+      travelPage.hidden = true;
+      addButton.hidden = true;
+      renderHomePage();
+      document.title = '出游打包神器';
+    }
+
+    function enterTravel(travelId) {
+      setPage('travel', travelId);
+    }
+
+    function enterHome() {
+      setPage('home');
+    }
+
+    function createNewTravel() {
+      const travel = createDefaultTravelData({ order: travels.length });
+      travels.push(travel);
+      saveTravels();
+      renderHomePage();
+    }
+
+    function openTravelActionModal(travelId) {
+      const travel = getTravelById(travelId);
+      if (!travel) return;
+      travelActionTargetId = travelId;
+      travelActionTitle.textContent = getDisplayTravelName(travel);
+      travelActionModal.classList.add('show');
+    }
+
+    function closeTravelActionModal() {
+      travelActionTargetId = null;
+      travelActionModal.classList.remove('show');
+    }
+
+    function openEditTravelDatesModal(travelId) {
+      const travel = getTravelById(travelId);
+      if (!travel) return;
+      editingTravelDatesId = travelId;
+      editTravelStartDateInput.value = travel.startDate || '';
+      editTravelEndDateInput.value = travel.endDate || '';
+      editTravelDatesModal.classList.add('show');
+    }
+
+    function closeEditTravelDatesModal() {
+      editingTravelDatesId = null;
+      editTravelDatesModal.classList.remove('show');
+    }
+
+    function saveEditedTravelDates() {
+      if (!editingTravelDatesId) return;
+      const travel = getTravelById(editingTravelDatesId);
+      if (!travel) return;
+      travel.startDate = editTravelStartDateInput.value || '';
+      travel.endDate = editTravelEndDateInput.value || '';
+      saveTravels();
+      renderHomePage();
+      closeEditTravelDatesModal();
+    }
+
+    function openEditTravelInfoModal(travelId = uiState.currentTravelId) {
+      const travel = getTravelById(travelId);
+      if (!travel) return;
+      editingTravelInfoId = travelId;
+      editTravelInfoNameInput.value = String(travel.name || '').trim();
+      editTravelInfoStartDateInput.value = travel.startDate || '';
+      editTravelInfoEndDateInput.value = travel.endDate || '';
+      editTravelInfoStartDatePicker.value = travel.startDate || '';
+      editTravelInfoEndDatePicker.value = travel.endDate || '';
+      editTravelInfoModal.classList.add('show');
+      editTravelInfoNameInput.focus();
+      editTravelInfoNameInput.select();
+    }
+
+    function closeEditTravelInfoModal() {
+      editingTravelInfoId = null;
+      editTravelInfoModal.classList.remove('show');
+    }
+
+    function saveEditedTravelInfo() {
+      if (!editingTravelInfoId) return;
+      const travel = getTravelById(editingTravelInfoId);
+      if (!travel) return;
+      const nextName = editTravelInfoNameInput.value.trim();
+      const startDate = normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
+      const endDate = normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
+      travel.name = nextName && nextName !== TRIP_TITLE_PLACEHOLDER ? nextName : '';
+      travel.startDate = startDate;
+      travel.endDate = endDate;
+      if (uiState.currentTravelId === travel.id) {
+        syncTravelToGlobals(travel);
+        renderTripTitle();
+      }
+      saveTravels();
+      renderHomePage();
+      closeEditTravelInfoModal();
+    }
+
+    function openTravelSettingsModal() {
+      if (!uiState.currentTravelId) return;
+      travelSettingsModal.classList.add('show');
+    }
+
+    function closeTravelSettingsModal() {
+      travelSettingsModal.classList.remove('show');
+    }
+
+    function openTravelCoverModal() {
+      travelCoverModal.classList.add('show');
+    }
+
+    function closeTravelCoverModal() {
+      travelCoverModal.classList.remove('show');
+    }
+
+    function openTravelDeleteConfirm(travel) {
+      confirmDeleteTitle.textContent = `确定删除旅行「${getDisplayTravelName(travel)}」？`;
+      confirmDeleteMessage.textContent = '删除后该旅行的所有内容将无法恢复';
+      confirmDeleteMessage.hidden = false;
+      pendingDeleteAction = () => {
+        deleteTravelById(travel.id);
+        enterHome();
+      };
+      confirmDeleteModal.classList.add('show');
+    }
+
+    function openConfirmDeleteMemberByName(memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member) return;
+      confirmDeleteTitle.textContent = `确定删除成员「${member.name}」？`;
+      confirmDeleteMessage.textContent = '删除后会同步移除该成员负责的所有物品关系';
+      confirmDeleteMessage.hidden = false;
+      pendingDeleteAction = () => removeMemberById(memberId);
+      confirmDeleteModal.classList.add('show');
+    }
+
+    function startInlineEditMemberRow(row, memberId) {
+      const member = members.find(m => m.id === memberId);
+      if (!member || row.dataset.editing === '1') return;
+      row.dataset.editing = '1';
+      const nameEl = row.querySelector('.member-manage-name');
+      if (!nameEl) return;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'member-manage-name-input';
+      input.value = member.name;
+      input.maxLength = 20;
+      const finish = (save) => {
+        if (save) {
+          const nextName = input.value.trim();
+          if (!nextName) {
+            renderMemberManagePage();
+            return;
+          }
+          if (members.some(m => m.id !== memberId && m.name === nextName)) {
+            input.select();
+            return;
+          }
+          const oldName = member.name;
+          if (oldName !== nextName) {
+            member.name = nextName;
+            checklistItems.forEach(item => {
+              if (item.completedOwners) {
+                item.completedOwners = item.completedOwners.map(o => (o === oldName ? nextName : o));
+              }
+              if (item.isAllMembers) {
+                syncItemAllMembersOwners(item);
+              } else if (item.owners && item.owners.length) {
+                item.owners = item.owners.map(o => (o === oldName ? nextName : o));
+              }
+              item.completed = isItemAllOwnersComplete(item);
+            });
+            saveMembers();
+            saveChecklistItems();
+            renderMemberList();
+            renderOwnerOptions();
+            renderChecklistItems();
+            renderHomePage();
+          }
+        }
+        renderMemberManagePage();
+      };
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') finish(true);
+        if (event.key === 'Escape') finish(false);
+      });
+      input.addEventListener('blur', () => finish(true));
+      nameEl.replaceWith(input);
+      input.focus();
+      input.select();
+    }
+
+    function renderMemberManagePage() {
+      if (!memberManageRows) return;
+      memberManageRows.innerHTML = '';
+      members.forEach(member => {
+        const row = document.createElement('div');
+        row.className = 'member-manage-row';
+        row.dataset.memberId = member.id;
+        const name = document.createElement('div');
+        name.className = 'member-manage-name';
+        name.textContent = member.name;
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'member-manage-delete';
+        deleteBtn.textContent = '🗑';
+        deleteBtn.setAttribute('aria-label', `删除成员 ${member.name}`);
+        deleteBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openConfirmDeleteMemberByName(member.id);
+        });
+        row.appendChild(name);
+        row.appendChild(deleteBtn);
+        row.addEventListener('click', () => startInlineEditMemberRow(row, member.id));
+        memberManageRows.appendChild(row);
+      });
+    }
+
+    function enterMemberManage() {
+      if (!uiState.currentTravelId) return;
+      closeTravelSettingsModal();
+      memberStripReorder.forceReset();
+      travelPage.hidden = true;
+      memberManagePage.hidden = false;
+      addButton.hidden = true;
+      uiState.page = 'members';
+      renderMemberManagePage();
+      document.title = '管理成员';
+    }
+
+    function leaveMemberManage() {
+      if (uiState.page === 'members') {
+        syncGlobalsToCurrentTravel();
+        saveTravels();
+        uiState.page = 'travel';
+        document.title = isTripTitleUnset() ? '旅行清单' : tripTitle.trim();
+      }
+      memberManagePage.hidden = true;
+      travelPage.hidden = false;
+      addButton.hidden = false;
+      renderMemberList();
+    }
+
+    function openEditTravelNameFromHome(travelId) {
+      const travel = getTravelById(travelId);
+      if (!travel) return;
+      editingTravelNameId = travelId;
+      editTripTitleInput.value = isTravelNameUnset(travel.name) ? '' : travel.name.trim();
+      editTripTitleModal.classList.add('show');
+      editTripTitleInput.focus();
+      if (!isTravelNameUnset(travel.name)) editTripTitleInput.select();
+    }
+
+    function deleteTravelById(travelId) {
+      travels = travels.filter(t => t.id !== travelId);
+      travels.forEach((t, i) => { t.order = i; });
+      saveTravels();
+      if (uiState.currentTravelId === travelId) {
+        uiState.currentTravelId = null;
+        uiState.page = 'home';
+      }
+      renderHomePage();
+    }
+
+    function renderTravelCardAvatars(travel) {
+      const wrap = document.createElement('div');
+      wrap.className = 'travel-card-avatars';
+      const memberListData = Array.isArray(travel.members) ? travel.members : [];
+      const maxVisible = 3;
+      memberListData.slice(0, maxVisible).forEach(m => {
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.style.background = colorForName(m.name);
+        avatar.textContent = (m.name || '').charAt(0) || '?';
+        wrap.appendChild(avatar);
+      });
+      const extra = memberListData.length - maxVisible;
+      if (extra > 0) {
+        const more = document.createElement('div');
+        more.className = 'avatar avatar-more';
+        more.textContent = `+${extra}`;
+        wrap.appendChild(more);
+      }
+      return wrap;
+    }
+
+
+    const TRAVEL_COVER_GRADIENTS = [
+      'linear-gradient(145deg, #38bdf8 0%, #0ea5e9 55%, #0284c7 100%)',
+      'linear-gradient(145deg, #fde68a 0%, #fbbf24 55%, #f59e0b 100%)',
+      'linear-gradient(145deg, #93c5fd 0%, #60a5fa 55%, #3b82f6 100%)',
+      'linear-gradient(145deg, #a7f3d0 0%, #34d399 55%, #10b981 100%)'
+    ];
+
+    function getTravelCoverStyle(index) {
+      const gradient = TRAVEL_COVER_GRADIENTS[index % TRAVEL_COVER_GRADIENTS.length];
+      return `background-image: ${gradient};`;
+    }
+
+    function renderHomePage() {
+      travelsContainer.innerHTML = '';
+      const sorted = getSortedTravels();
+      sorted.forEach((travel, index) => {
+        const card = document.createElement('div');
+        card.className = 'card travel-card';
+        card.dataset.travelId = travel.id;
+
+        const thumb = document.createElement('div');
+        thumb.className = 'travel-card-thumb';
+        thumb.setAttribute('aria-hidden', 'true');
+        thumb.style.cssText = getTravelCoverStyle(index);
+
+        const body = document.createElement('div');
+        body.className = 'travel-card-body';
+
+        const header = document.createElement('div');
+        header.className = 'travel-card-header';
+        const nameEl = document.createElement('span');
+        nameEl.className = 'travel-card-name';
+        if (isTravelNameUnset(travel.name)) nameEl.classList.add('placeholder');
+        nameEl.textContent = getDisplayTravelName(travel);
+        nameEl.setAttribute('role', 'button');
+        nameEl.setAttribute('tabindex', '0');
+        nameEl.title = '长按更多操作';
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'travel-card-drag-handle';
+        dragHandle.setAttribute('aria-hidden', 'true');
+        dragHandle.title = '长按拖动排序';
+        header.appendChild(nameEl);
+        header.appendChild(dragHandle);
+
+        const datesEl = document.createElement('div');
+        datesEl.className = 'travel-card-dates';
+        datesEl.textContent = formatTravelDateRange(travel);
+
+        const progress = getTravelItemProgress(travel);
+        const progressRow = document.createElement('div');
+        progressRow.className = 'travel-card-progress-row';
+        const progressTrack = document.createElement('div');
+        progressTrack.className = 'travel-card-progress-track';
+        const progressFill = document.createElement('div');
+        progressFill.className = 'travel-card-progress-fill';
+        progressFill.style.width = `${progress.percent}%`;
+        progressTrack.appendChild(progressFill);
+        const progressEl = document.createElement('span');
+        progressEl.className = 'travel-card-progress';
+        progressEl.textContent = `${progress.percent}%`;
+        progressEl.setAttribute('aria-label', `已完成 ${progress.completed}，共 ${progress.total}`);
+        progressRow.appendChild(progressTrack);
+        progressRow.appendChild(progressEl);
+
+        body.appendChild(header);
+        body.appendChild(datesEl);
+        body.appendChild(renderTravelCardAvatars(travel));
+        body.appendChild(progressRow);
+
+        card.appendChild(thumb);
+        card.appendChild(body);
+
+        bindUiLongPress(nameEl, {
+          onPointerDown: (event) => {
+            travelListReorder.cancelPending();
+            event.stopPropagation();
+          },
+          onTap: () => enterTravel(travel.id),
+          onLongPress: () => openTravelActionModal(travel.id)
+        });
+
+        card.addEventListener('click', (event) => {
+          if (event.target.closest('.travel-card-drag-handle')) return;
+          if (event.target.closest('.travel-card-name')) return;
+          enterTravel(travel.id);
+        });
+
+        travelsContainer.appendChild(card);
+      });
+
+      travelListReorder.bindHandles();
+    }
+
+    const TRAVEL_REORDER_LONG_PRESS_MS = 500;
+    const TRAVEL_REORDER_MOVE_THRESHOLD = 12;
+    const TRAVEL_REORDER_EDGE_ZONE = 56;
+    const TRAVEL_REORDER_SCROLL_STEP = 12;
+
+    const travelListReorder = (function () {
+      let session = null;
+      let insertIndicator = null;
+      let scrollRaf = null;
+      let savedBodyOverflow = null;
+      let endListenersAttached = false;
+
+      function getTravelCards() {
+        return [...travelsContainer.querySelectorAll('.travel-card')];
+      }
+
+      function findInsertIndex(clientY, sourceCard) {
+        const cards = getTravelCards();
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          if (card === sourceCard) continue;
+          const rect = card.getBoundingClientRect();
+          if (clientY < rect.top + rect.height / 2) return i;
+        }
+        return cards.length;
+      }
+
+      function updateInsertIndicator(insertIndex) {
+        if (!insertIndicator) return;
+        const cards = getTravelCards();
+        if (!cards.length) {
+          insertIndicator.hidden = true;
+          return;
+        }
+        let top;
+        if (insertIndex <= 0) {
+          top = cards[0].offsetTop;
+        } else if (insertIndex >= cards.length) {
+          const last = cards[cards.length - 1];
+          top = last.offsetTop + last.offsetHeight;
+        } else {
+          top = cards[insertIndex].offsetTop;
+        }
+        insertIndicator.style.top = `${top}px`;
+        insertIndicator.hidden = false;
+        insertIndicator.style.display = 'block';
+      }
+
+      function lockPageScroll() {
+        if (savedBodyOverflow == null) savedBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+      }
+
+      function forceUnlockPageScroll() {
+        document.body.style.overflow = savedBodyOverflow || '';
+        savedBodyOverflow = null;
+      }
+
+      function stopEdgeScrollLoop() {
+        if (scrollRaf) {
+          cancelAnimationFrame(scrollRaf);
+          scrollRaf = null;
+        }
+      }
+
+      function edgeScroll(clientY) {
+        if (clientY < TRAVEL_REORDER_EDGE_ZONE) {
+          window.scrollBy(0, -TRAVEL_REORDER_SCROLL_STEP);
+        } else if (clientY > window.innerHeight - TRAVEL_REORDER_EDGE_ZONE) {
+          window.scrollBy(0, TRAVEL_REORDER_SCROLL_STEP);
+        }
+      }
+
+      function startEdgeScrollLoop() {
+        stopEdgeScrollLoop();
+        const tick = () => {
+          if (!session || !session.dragging) return;
+          edgeScroll(session.lastClientY);
+          session.insertIndex = findInsertIndex(session.lastClientY, session.card);
+          updateInsertIndicator(session.insertIndex);
+          moveFloat(session.lastClientX, session.lastClientY);
+          scrollRaf = requestAnimationFrame(tick);
+        };
+        scrollRaf = requestAnimationFrame(tick);
+      }
+
+      function moveFloat(clientX, clientY) {
+        if (!session || !session.floatEl) return;
+        session.floatEl.style.left = `${clientX - session.offsetX}px`;
+        session.floatEl.style.top = `${clientY - session.offsetY}px`;
+      }
+
+      function startDrag() {
+        if (!session || session.dragging) return;
+        const s = session;
+        if (s.longPressTimer) {
+          clearTimeout(s.longPressTimer);
+          s.longPressTimer = null;
+        }
+        const sorted = getSortedTravels();
+        s.fromIndex = sorted.findIndex(t => t.id === s.travelId);
+        if (s.fromIndex < 0) return;
+
+        s.dragging = true;
+        const card = s.card;
+        const rect = card.getBoundingClientRect();
+        card.classList.add('travel-reorder-source', 'travel-reorder-active');
+
+        const floatEl = card.cloneNode(true);
+        floatEl.classList.add('travel-reorder-float');
+        floatEl.classList.remove('travel-reorder-source', 'travel-reorder-active');
+        floatEl.setAttribute('aria-hidden', 'true');
+        floatEl.style.pointerEvents = 'none';
+        floatEl.style.width = `${rect.width}px`;
+        floatEl.style.left = `${rect.left}px`;
+        floatEl.style.top = `${rect.top}px`;
+        document.body.appendChild(floatEl);
+        s.floatEl = floatEl;
+        s.offsetX = s.lastClientX - rect.left;
+        s.offsetY = s.lastClientY - rect.top;
+
+        lockPageScroll();
+        try {
+          s.handle.setPointerCapture(s.pointerId);
+          s.handle.addEventListener('lostpointercapture', onHandleLostPointerCapture);
+        } catch (err) { /* ignore */ }
+
+        s.insertIndex = findInsertIndex(s.lastClientY, card);
+        updateInsertIndicator(s.insertIndex);
+        moveFloat(s.lastClientX, s.lastClientY);
+        startEdgeScrollLoop();
+      }
+
+      function applyTravelReorder(fromIndex, insertIndex) {
+        resetDragUI(null);
+        const sorted = getSortedTravels();
+        if (fromIndex < 0 || sorted.length < 2) return;
+        if (insertIndex === fromIndex || insertIndex === fromIndex + 1) return;
+        const next = sorted.slice();
+        const [item] = next.splice(fromIndex, 1);
+        if (insertIndex > fromIndex) insertIndex -= 1;
+        next.splice(insertIndex, 0, item);
+        next.forEach((t, i) => { t.order = i; });
+        travels = next;
+        saveTravels();
+        renderHomePage();
+        resetDragUI(null);
+      }
+
+      function detachMoveListener() {
+        document.removeEventListener('pointermove', onDocumentPointerMove);
+      }
+
+      function attachMoveListener() {
+        detachMoveListener();
+        document.addEventListener('pointermove', onDocumentPointerMove, { passive: false });
+      }
+
+      function releaseHandlePointerCapture(handle, pointerId) {
+        if (!handle || pointerId == null) return;
+        try {
+          if (handle.hasPointerCapture && handle.hasPointerCapture(pointerId)) {
+            handle.releasePointerCapture(pointerId);
+          }
+        } catch (err) { /* ignore */ }
+      }
+
+      function attachEndListeners() {
+        if (endListenersAttached) return;
+        window.addEventListener('pointerup', onWindowPointerEnd, true);
+        window.addEventListener('pointercancel', onWindowPointerEnd, true);
+        window.addEventListener('touchend', onWindowTouchEnd, true);
+        window.addEventListener('touchcancel', onWindowTouchEnd, true);
+        endListenersAttached = true;
+      }
+
+      function detachEndListeners() {
+        if (!endListenersAttached) return;
+        window.removeEventListener('pointerup', onWindowPointerEnd, true);
+        window.removeEventListener('pointercancel', onWindowPointerEnd, true);
+        window.removeEventListener('touchend', onWindowTouchEnd, true);
+        window.removeEventListener('touchcancel', onWindowTouchEnd, true);
+        endListenersAttached = false;
+      }
+
+      function purgeDragArtifacts(activeSession) {
+        document.querySelectorAll('.travel-reorder-float').forEach(el => el.remove());
+        travelsContainer.querySelectorAll('.travel-card').forEach(card => {
+          card.classList.remove('travel-reorder-source', 'travel-reorder-active');
+        });
+        if (activeSession && activeSession.floatEl && activeSession.floatEl.isConnected) {
+          activeSession.floatEl.remove();
+        }
+        if (activeSession && activeSession.card) {
+          activeSession.card.classList.remove('travel-reorder-source', 'travel-reorder-active');
+        }
+        if (insertIndicator) {
+          insertIndicator.hidden = true;
+          insertIndicator.style.display = 'none';
+        }
+      }
+
+      function resetDragUI(activeSession) {
+        stopEdgeScrollLoop();
+        forceUnlockPageScroll();
+        detachMoveListener();
+        detachEndListeners();
+        if (activeSession && activeSession.longPressTimer) {
+          clearTimeout(activeSession.longPressTimer);
+          activeSession.longPressTimer = null;
+        }
+        if (activeSession && activeSession.handle) {
+          activeSession.handle.removeEventListener('lostpointercapture', onHandleLostPointerCapture);
+          releaseHandlePointerCapture(activeSession.handle, activeSession.pointerId);
+        }
+        purgeDragArtifacts(activeSession);
+      }
+
+      function cleanup() {
+        const active = session;
+        session = null;
+        resetDragUI(active);
+      }
+
+      function endSession() {
+        if (!session || session.ending) return;
+        session.ending = true;
+        const wasDragging = session.dragging;
+        const fromIndex = session.fromIndex;
+        const insertIndex = session.insertIndex;
+        cleanup();
+        if (wasDragging) applyTravelReorder(fromIndex, insertIndex);
+      }
+
+      function cancelPending() {
+        if (!session || session.dragging) return;
+        endSession();
+      }
+
+      function pointerIdMatches(event) {
+        if (!session || event.pointerId == null) return true;
+        return event.pointerId === session.pointerId;
+      }
+
+      function onWindowPointerEnd(event) {
+        if (!session || !pointerIdMatches(event)) return;
+        endSession();
+      }
+
+      function onWindowTouchEnd() {
+        if (!session || session.pointerType !== 'touch') return;
+        endSession();
+      }
+
+      function onHandleLostPointerCapture() {
+        if (!session || !session.dragging || session.ending) return;
+        endSession();
+      }
+
+      function onDocumentPointerMove(event) {
+        if (!session || event.pointerId !== session.pointerId) return;
+        session.lastClientX = event.clientX;
+        session.lastClientY = event.clientY;
+
+        if (!session.dragging) {
+          const dx = event.clientX - session.startX;
+          const dy = event.clientY - session.startY;
+          const distance = Math.hypot(dx, dy);
+          if (session.pointerType === 'touch') {
+            if (distance > TRAVEL_REORDER_MOVE_THRESHOLD && session.longPressTimer) {
+              clearTimeout(session.longPressTimer);
+              session.longPressTimer = null;
+            }
+            return;
+          }
+          if (distance >= TRAVEL_REORDER_MOVE_THRESHOLD) startDrag();
+          return;
+        }
+
+        event.preventDefault();
+        session.insertIndex = findInsertIndex(event.clientY, session.card);
+        updateInsertIndicator(session.insertIndex);
+        moveFloat(event.clientX, event.clientY);
+      }
+
+      function onHandlePointerDown(event) {
+        if (getSortedTravels().length < 2) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        if (session) endSession();
+
+        const handle = event.currentTarget;
+        const card = handle.closest('.travel-card');
+        if (!card) return;
+
+        event.stopPropagation();
+        session = {
+          pointerId: event.pointerId,
+          pointerType: event.pointerType,
+          handle,
+          card,
+          travelId: card.dataset.travelId || '',
+          startX: event.clientX,
+          startY: event.clientY,
+          lastClientX: event.clientX,
+          lastClientY: event.clientY,
+          fromIndex: -1,
+          insertIndex: 0,
+          dragging: false,
+          ending: false,
+          longPressTimer: null,
+          floatEl: null,
+          offsetX: 0,
+          offsetY: 0
+        };
+
+        attachEndListeners();
+        attachMoveListener();
+
+        if (event.pointerType === 'touch') {
+          session.longPressTimer = setTimeout(() => {
+            if (session && !session.dragging && !session.ending) startDrag();
+          }, TRAVEL_REORDER_LONG_PRESS_MS);
+        }
+      }
+
+      function ensureInsertIndicator() {
+        if (insertIndicator && insertIndicator.isConnected && insertIndicator.parentNode === travelsContainer) return;
+        insertIndicator = document.createElement('div');
+        insertIndicator.className = 'travel-insert-indicator';
+        insertIndicator.hidden = true;
+        insertIndicator.style.display = 'none';
+        travelsContainer.appendChild(insertIndicator);
+      }
+
+      function bindHandles() {
+        resetDragUI(null);
+        ensureInsertIndicator();
+        if (getSortedTravels().length < 2) {
+          if (insertIndicator) {
+            insertIndicator.hidden = true;
+            insertIndicator.style.display = 'none';
+          }
+          return;
+        }
+        travelsContainer.querySelectorAll('.travel-card-drag-handle').forEach(handle => {
+          handle.replaceWith(handle.cloneNode(true));
+        });
+        travelsContainer.querySelectorAll('.travel-card-drag-handle').forEach(handle => {
+          handle.addEventListener('pointerdown', onHandlePointerDown);
+        });
+      }
+
+      return { bindHandles, cancelPending, forceReset: () => resetDragUI(null) };
+    })();
+
+    backToHomeBtn.addEventListener('click', enterHome);
+    travelSettingsBtn.addEventListener('click', openTravelSettingsModal);
+    travelSettingsCancelBtn.addEventListener('click', closeTravelSettingsModal);
+    travelSettingsModal.addEventListener('click', (event) => {
+      if (event.target === travelSettingsModal) closeTravelSettingsModal();
+    });
+    travelSettingsCoverBtn.addEventListener('click', () => {
+      closeTravelSettingsModal();
+      openTravelCoverModal();
+    });
+    travelSettingsEditInfoBtn.addEventListener('click', () => {
+      const travelId = uiState.currentTravelId;
+      closeTravelSettingsModal();
+      if (travelId) openEditTravelInfoModal(travelId);
+    });
+    travelSettingsMembersBtn.addEventListener('click', () => {
+      closeTravelSettingsModal();
+      enterMemberManage();
+    });
+    travelSettingsDeleteBtn.addEventListener('click', () => {
+      const travel = getCurrentTravel();
+      closeTravelSettingsModal();
+      if (travel) openTravelDeleteConfirm(travel);
+    });
+
+    travelCoverCancelBtn.addEventListener('click', closeTravelCoverModal);
+    travelCoverModal.addEventListener('click', (event) => {
+      if (event.target === travelCoverModal) closeTravelCoverModal();
+    });
+    travelCoverSystemBtn.addEventListener('click', closeTravelCoverModal);
+    travelCoverUploadBtn.addEventListener('click', closeTravelCoverModal);
+
+    cancelEditTravelInfoBtn.addEventListener('click', closeEditTravelInfoModal);
+    saveEditTravelInfoBtn.addEventListener('click', saveEditedTravelInfo);
+    editTravelInfoNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedTravelInfo();
+    });
+    editTravelInfoStartDateInput.addEventListener('blur', () => {
+      normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
+    });
+    editTravelInfoEndDateInput.addEventListener('blur', () => {
+      normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
+    });
+    editTravelInfoStartDatePickerBtn.addEventListener('click', () => {
+      normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
+      openDatePickerInput(editTravelInfoStartDatePicker);
+    });
+    editTravelInfoEndDatePickerBtn.addEventListener('click', () => {
+      normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
+      openDatePickerInput(editTravelInfoEndDatePicker);
+    });
+    editTravelInfoStartDatePicker.addEventListener('change', () => {
+      const iso = normalizeToIsoDate(editTravelInfoStartDatePicker.value);
+      editTravelInfoStartDateInput.value = iso;
+      editTravelInfoStartDatePicker.value = iso;
+    });
+    editTravelInfoEndDatePicker.addEventListener('change', () => {
+      const iso = normalizeToIsoDate(editTravelInfoEndDatePicker.value);
+      editTravelInfoEndDateInput.value = iso;
+      editTravelInfoEndDatePicker.value = iso;
+    });
+    editTravelInfoModal.addEventListener('click', (event) => {
+      if (event.target === editTravelInfoModal) closeEditTravelInfoModal();
+    });
+
+    cancelTravelActionBtn.addEventListener('click', closeTravelActionModal);
+    travelActionModal.addEventListener('click', (event) => {
+      if (event.target === travelActionModal) closeTravelActionModal();
+    });
+    travelActionRenameBtn.addEventListener('click', () => {
+      const travelId = travelActionTargetId;
+      closeTravelActionModal();
+      if (travelId) openEditTravelNameFromHome(travelId);
+    });
+    travelActionDatesBtn.addEventListener('click', () => {
+      const travelId = travelActionTargetId;
+      closeTravelActionModal();
+      if (travelId) openEditTravelDatesModal(travelId);
+    });
+    travelActionDeleteBtn.addEventListener('click', () => {
+      const travelId = travelActionTargetId;
+      closeTravelActionModal();
+      if (!travelId) return;
+      openConfirmDelete(() => deleteTravelById(travelId), 'travel');
+    });
+    cancelEditTravelDatesBtn.addEventListener('click', closeEditTravelDatesModal);
+    saveEditTravelDatesBtn.addEventListener('click', saveEditedTravelDates);
+    editTravelDatesModal.addEventListener('click', (event) => {
+      if (event.target === editTravelDatesModal) closeEditTravelDatesModal();
+    });
+
+    loadTravels();
+    addButton.hidden = true;
+    renderHomePage();
 
   </script>
 
