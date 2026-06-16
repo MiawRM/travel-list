@@ -166,15 +166,27 @@
       display: none;
     }
 
+    .member-list.is-reordering {
+      overflow-x: hidden;
+      touch-action: none;
+      -webkit-overflow-scrolling: auto;
+    }
+
+    .member-list.is-reordering .member-chip {
+      touch-action: none;
+    }
+
     .member-chip.member-reorder-source {
       opacity: 0.35;
     }
 
     .member-reorder-float {
       position: fixed;
-      z-index: 10000;
+      z-index: 10001;
       pointer-events: none !important;
-      box-shadow: 0 12px 30px rgba(33, 65, 111, 0.12);
+      transform: scale(1.08);
+      box-shadow: 0 16px 36px rgba(33, 65, 111, 0.18);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .member-pending-list {
@@ -3099,6 +3111,10 @@
         if (s.floatEl && s.floatEl.isConnected) s.floatEl.remove();
         if (s.chip) s.chip.classList.remove('member-reorder-source');
         if (insertIndicator) insertIndicator.style.display = 'none';
+        memberList.classList.remove('is-reordering');
+        if (s.chip && s.pointerId != null && s.chip.releasePointerCapture) {
+          try { s.chip.releasePointerCapture(s.pointerId); } catch (_) { /* ignore */ }
+        }
         if (apply && s.dragging) applyReorder(s.fromIndex, s.insertIndex);
       }
 
@@ -3109,6 +3125,11 @@
         s.fromIndex = members.findIndex(m => m.id === s.memberId);
         if (s.fromIndex < 0) return;
         s.chip.classList.add('member-reorder-source');
+        memberList.classList.add('is-reordering');
+        s.frozenScrollLeft = memberList.scrollLeft;
+        if (s.pointerId != null && s.chip.setPointerCapture) {
+          try { s.chip.setPointerCapture(s.pointerId); } catch (_) { /* ignore */ }
+        }
         const rect = s.chip.getBoundingClientRect();
         const floatEl = s.chip.cloneNode(true);
         floatEl.classList.add('member-reorder-float');
@@ -3136,6 +3157,9 @@
           return;
         }
         event.preventDefault();
+        if (memberList.scrollLeft !== session.frozenScrollLeft) {
+          memberList.scrollLeft = session.frozenScrollLeft;
+        }
         session.insertIndex = findInsertIndex(event.clientX, session.chip);
         updateIndicator(session.insertIndex);
         if (session.floatEl) {
@@ -3180,7 +3204,8 @@
           }, MEMBER_STRIP_REORDER_LONG_PRESS_MS),
           floatEl: null,
           offsetX: 0,
-          offsetY: 0
+          offsetY: 0,
+          frozenScrollLeft: 0
         };
         document.addEventListener('pointermove', onMove, { passive: false });
         window.addEventListener('pointerup', onEnd, true);
