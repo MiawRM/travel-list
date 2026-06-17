@@ -1444,45 +1444,42 @@
       padding: 0 8px 0 12px;
       margin: 0;
       font-size: 16px;
-      cursor: pointer;
+      cursor: text;
       outline: none;
       position: relative;
       z-index: 4;
     }
 
-    .date-input-row.is-editing input[type="text"] {
-      cursor: text;
-      position: relative;
-      z-index: 4;
-    }
-
-    .date-picker-icon {
+    .date-picker-trigger {
       flex-shrink: 0;
       width: 44px;
       height: 44px;
+      border: none;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       color: var(--color-accent);
-      pointer-events: none;
-      user-select: none;
+      cursor: pointer;
+      touch-action: manipulation;
+      position: relative;
+      z-index: 5;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .date-picker-native {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      width: 1px;
+      height: 1px;
       opacity: 0;
       margin: 0;
       padding: 0;
       border: 0;
-      cursor: pointer;
-      z-index: 1;
       pointer-events: none;
-      -webkit-appearance: none;
-      appearance: none;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
     }
 
     #homePage.is-travel-reordering {
@@ -1756,7 +1753,7 @@
           <span class="date-field-label">开始日期</span>
           <div class="date-input-row" id="editTravelInfoStartDateRow">
             <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
-            <span class="date-picker-icon" aria-hidden="true">📅</span>
+            <button type="button" class="date-picker-trigger" aria-label="选择开始日期">📅</button>
             <input id="editTravelInfoStartDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
           </div>
         </div>
@@ -1764,7 +1761,7 @@
           <span class="date-field-label">结束日期</span>
           <div class="date-input-row" id="editTravelInfoEndDateRow">
             <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
-            <span class="date-picker-icon" aria-hidden="true">📅</span>
+            <button type="button" class="date-picker-trigger" aria-label="选择结束日期">📅</button>
             <input id="editTravelInfoEndDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
           </div>
         </div>
@@ -4124,69 +4121,49 @@
       return normalized;
     }
 
-    function openDatePickerInput(pickerInput) {
+    function openDatePickerInput(pickerInput, textInput) {
       if (!pickerInput) return;
+      const iso = normalizeToIsoDate(textInput ? textInput.value : pickerInput.value);
+      if (iso) pickerInput.value = iso;
       try {
         if (typeof pickerInput.showPicker === 'function') {
           pickerInput.showPicker();
           return;
         }
       } catch (_) { /* ignore */ }
-      try {
-        pickerInput.focus({ preventScroll: true });
-      } catch (_) { /* ignore */ }
       pickerInput.click();
     }
 
-    const DATE_MANUAL_LONG_PRESS_MS = 420;
-
     function bindTravelInfoDateField(row, textInput, pickerInput) {
       if (!row || !textInput || !pickerInput) return;
-      let manualTimer = null;
-
-      function clearManualTimer() {
-        if (manualTimer) {
-          clearTimeout(manualTimer);
-          manualTimer = null;
-        }
-      }
+      const calendarBtn = row.querySelector('.date-picker-trigger');
 
       function openPicker() {
-        if (row.classList.contains('is-editing')) return;
         normalizeDateInputField(textInput, pickerInput);
-        openDatePickerInput(pickerInput);
+        openDatePickerInput(pickerInput, textInput);
       }
 
-      function enterManualEdit() {
-        row.classList.add('is-editing');
-        textInput.focus();
-        try {
-          const len = textInput.value.length;
-          textInput.setSelectionRange(len, len);
-        } catch (_) { /* ignore */ }
+      if (calendarBtn) {
+        calendarBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openPicker();
+        });
       }
 
       row.addEventListener('click', (event) => {
+        if (event.target === textInput) return;
+        if (calendarBtn && (event.target === calendarBtn || calendarBtn.contains(event.target))) return;
         event.preventDefault();
         event.stopPropagation();
-        if (row.classList.contains('is-editing') && event.target === textInput) return;
         openPicker();
       });
 
-      textInput.addEventListener('pointerdown', (event) => {
+      textInput.addEventListener('click', (event) => {
         event.stopPropagation();
-        clearManualTimer();
-        manualTimer = window.setTimeout(() => {
-          manualTimer = null;
-          enterManualEdit();
-        }, DATE_MANUAL_LONG_PRESS_MS);
-      });
-      ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
-        textInput.addEventListener(type, clearManualTimer);
       });
 
       textInput.addEventListener('blur', () => {
-        row.classList.remove('is-editing');
         normalizeDateInputField(textInput, pickerInput);
       });
 
@@ -4202,7 +4179,6 @@
         const iso = normalizeToIsoDate(pickerInput.value);
         textInput.value = iso;
         pickerInput.value = iso;
-        row.classList.remove('is-editing');
       });
 
       pickerInput.addEventListener('input', () => {
@@ -4403,8 +4379,6 @@
       editTravelInfoEndDateInput.value = travel.endDate || '';
       editTravelInfoStartDatePicker.value = travel.startDate || '';
       editTravelInfoEndDatePicker.value = travel.endDate || '';
-      editTravelInfoStartDateRow.classList.remove('is-editing');
-      editTravelInfoEndDateRow.classList.remove('is-editing');
       editTravelInfoModal.classList.add('show');
       editTravelInfoNameInput.focus();
       editTravelInfoNameInput.select();
@@ -4439,9 +4413,6 @@
         if (document.activeElement && typeof document.activeElement.blur === 'function') {
           document.activeElement.blur();
         }
-
-        editTravelInfoStartDateRow.classList.remove('is-editing');
-        editTravelInfoEndDateRow.classList.remove('is-editing');
 
         const nextName = editTravelInfoNameInput.value.trim();
         const startDate = normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
