@@ -204,7 +204,7 @@
       gap: 10px;
       padding: 8px 0;
       border-bottom: 1px solid var(--color-border);
-      color: #ef4444;
+      color: var(--color-title);
       font-size: 17px;
       line-height: 1.35;
     }
@@ -235,9 +235,8 @@
     }
 
     .member-pending-item.done .member-pending-name {
-      color: var(--color-accent);
+      color: #8C9BB5;
       text-decoration: line-through;
-      opacity: 0.8;
     }
 
     .member-pending-item.done .member-pending-toggle {
@@ -245,11 +244,22 @@
       background: var(--bg-page);
     }
 
-    .member-pending-empty {
-      margin: 0 0 14px;
-      color: var(--color-secondary);
-      font-size: 15px;
+    .member-pending-summary {
       text-align: center;
+      margin: 0 0 12px;
+    }
+
+    .member-pending-percent {
+      font-size: 16px;
+      font-weight: 600;
+      color: #8C9BB5;
+      margin-bottom: 4px;
+    }
+
+    .member-pending-encourage {
+      font-size: 13px;
+      font-weight: 400;
+      color: #8C9BB5;
     }
 
     .member-action-list {
@@ -580,19 +590,30 @@
 
     .add-button {
       position: fixed;
-      bottom: 24px;
-      left: 24px;
-      right: 24px;
-      background: var(--color-accent);
-      color: white;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      width: 56px;
+      height: 56px;
       border: none;
-      border-radius: var(--radius-btn);
-      padding: 18px;
-      font-size: 18px;
-      font-weight: 700;
+      border-radius: 50%;
+      background: #6B93D6;
+      color: #ffffff;
+      font-size: 30px;
+      font-weight: 300;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      box-shadow: var(--shadow-card);
+      box-shadow: 0 8px 20px rgba(107,147,214,0.25);
       transition: all 0.2s ease;
+      z-index: 90;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .add-button:active {
+      transform: scale(0.95);
     }
 
     .invite-hint-intro {
@@ -820,6 +841,10 @@
       min-height: 100vh;
     }
 
+    #travelPage {
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+
     .home-hero {
       position: relative;
       margin: -24px -24px 24px;
@@ -964,6 +989,8 @@
       border-radius: var(--radius-card);
       box-shadow: var(--shadow-card);
       transition: all 0.2s ease;
+      -webkit-touch-callout: none;
+      user-select: none;
     }
 
     .travel-card:active {
@@ -1352,65 +1379,115 @@
       background: var(--bg-page);
     }
 
-    .date-range-inputs {
+    #editTravelInfoModal {
+      z-index: 102;
+    }
+
+    #editTravelInfoModal .modal {
+      position: relative;
+      z-index: 1;
+    }
+
+    #editTravelInfoModal .modal-actions {
+      position: relative;
+      z-index: 100;
+      margin-top: 8px;
+      pointer-events: auto;
+    }
+
+    #editTravelInfoModal .modal-actions .modal-btn {
+      flex: 1;
+      min-height: 44px;
+      border-radius: 16px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    .date-range-fields {
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      align-items: center;
       margin-bottom: 12px;
     }
 
-    .date-range-inputs input {
-      flex: 1;
-      margin-bottom: 0;
-    }
-
-    .date-range-sep {
+    .date-field-label {
+      display: block;
+      margin-bottom: 6px;
       color: var(--color-secondary);
-      font-size: 14px;
-      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 500;
     }
 
     .date-input-row {
       position: relative;
-      flex: 1;
-      min-width: 0;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      background: var(--bg-page);
+      cursor: pointer;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .date-input-row input[type="text"] {
-      padding-right: 40px;
-      margin-bottom: 0;
+      flex: 1;
+      min-width: 0;
+      min-height: 44px;
+      border: none;
+      background: transparent;
+      padding: 0 8px 0 12px;
+      margin: 0;
+      font-size: 16px;
+      cursor: pointer;
+      outline: none;
+      position: relative;
+      z-index: 4;
     }
 
-    .date-picker-btn {
-      position: absolute;
-      top: 50%;
-      right: 8px;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 28px;
-      border: none;
-      border-radius: 8px;
-      background: var(--bg-page);
-      color: var(--color-accent);
-      font-size: 15px;
-      line-height: 1;
-      display: inline-flex;
+    .date-input-row.is-editing input[type="text"] {
+      cursor: text;
+      position: relative;
+      z-index: 4;
+    }
+
+    .date-picker-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      touch-action: manipulation;
+      font-size: 18px;
+      color: var(--color-accent);
+      pointer-events: none;
+      user-select: none;
     }
 
-    .date-picker-hidden {
+    .date-picker-native {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
       opacity: 0;
-      pointer-events: none;
-      width: 0;
-      height: 0;
-      border: 0;
-      padding: 0;
       margin: 0;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      z-index: 1;
+      pointer-events: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #homePage.is-travel-reordering {
+      overflow: hidden;
+      touch-action: none;
     }
 
   </style>
@@ -1468,7 +1545,7 @@
     <button type="button" class="add-category-btn" id="addCategoryOpenBtn">＋ 添加分类</button>
   </div>
 
-  <button type="button" class="add-button" id="inviteJoinBtn">添加物品</button>
+  <button type="button" class="add-button" id="inviteJoinBtn" aria-label="添加物品">+</button>
   </div>
 
   <div id="memberManagePage" hidden>
@@ -1547,18 +1624,6 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="editTripTitleModal">
-    <div class="modal">
-      <h3>编辑旅行名称</h3>
-      <label for="editTripTitleInput">旅行名称</label>
-      <input id="editTripTitleInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
-      <div class="modal-actions">
-        <button type="button" class="modal-btn cancel" id="cancelEditTripTitleBtn">取消</button>
-        <button type="button" class="modal-btn confirm" id="saveEditTripTitleBtn">保存</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-overlay" id="editCategoryModal">
     <div class="modal">
       <h3>编辑分类</h3>
@@ -1611,7 +1676,10 @@
     <div class="modal">
       <h3 id="memberPendingTitle">还没准备</h3>
       <ul class="member-pending-list" id="memberPendingList"></ul>
-      <p class="member-pending-empty" id="memberPendingEmpty" hidden>已全部准备好 🎉</p>
+      <div class="member-pending-summary" id="memberPendingSummary">
+        <div class="member-pending-percent" id="memberPendingPercent">0%</div>
+        <div class="member-pending-encourage" id="memberPendingEncourage">刚刚开始准备 🌱</div>
+      </div>
       <div class="modal-actions member-pending-actions">
         <button type="button" class="modal-btn confirm" id="closeMemberPendingBtn">知道了</button>
       </div>
@@ -1655,36 +1723,6 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="travelActionModal">
-    <div class="modal">
-      <h3 id="travelActionTitle">旅行</h3>
-      <div class="member-action-list">
-        <button type="button" class="member-action-btn" id="travelActionRenameBtn">修改旅行名称</button>
-        <button type="button" class="member-action-btn" id="travelActionDatesBtn">修改旅行时间</button>
-        <button type="button" class="member-action-btn member-action-btn-danger" id="travelActionDeleteBtn">删除旅行</button>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn cancel" id="cancelTravelActionBtn">取消</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="editTravelDatesModal">
-    <div class="modal">
-      <h3>修改旅行时间</h3>
-      <label>旅行时间</label>
-      <div class="date-range-inputs">
-        <input id="editTravelStartDateInput" type="date" />
-        <span class="date-range-sep">至</span>
-        <input id="editTravelEndDateInput" type="date" />
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn cancel" id="cancelEditTravelDatesBtn">取消</button>
-        <button type="button" class="modal-btn confirm" id="saveEditTravelDatesBtn">保存</button>
-      </div>
-    </div>
-  </div>
-
   <div class="modal-overlay action-sheet-overlay" id="travelSettingsModal">
     <div class="modal">
       <button type="button" class="action-sheet-btn" id="travelSettingsCoverBtn">更换旅行封面</button>
@@ -1713,22 +1751,27 @@
       <label for="editTravelInfoNameInput">旅行名称</label>
       <input id="editTravelInfoNameInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
       <label>旅行时间</label>
-      <div class="date-range-inputs">
-        <div class="date-input-row">
-          <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" />
-          <button type="button" class="date-picker-btn" id="editTravelInfoStartDatePickerBtn" aria-label="选择开始日期">📅</button>
-          <input id="editTravelInfoStartDatePicker" class="date-picker-hidden" type="date" tabindex="-1" aria-hidden="true" />
+      <div class="date-range-fields">
+        <div>
+          <span class="date-field-label">开始日期</span>
+          <div class="date-input-row" id="editTravelInfoStartDateRow">
+            <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
+            <span class="date-picker-icon" aria-hidden="true">📅</span>
+            <input id="editTravelInfoStartDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
+          </div>
         </div>
-        <span class="date-range-sep">至</span>
-        <div class="date-input-row">
-          <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" />
-          <button type="button" class="date-picker-btn" id="editTravelInfoEndDatePickerBtn" aria-label="选择结束日期">📅</button>
-          <input id="editTravelInfoEndDatePicker" class="date-picker-hidden" type="date" tabindex="-1" aria-hidden="true" />
+        <div>
+          <span class="date-field-label">结束日期</span>
+          <div class="date-input-row" id="editTravelInfoEndDateRow">
+            <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
+            <span class="date-picker-icon" aria-hidden="true">📅</span>
+            <input id="editTravelInfoEndDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
+          </div>
         </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="modal-btn cancel" id="cancelEditTravelInfoBtn">取消</button>
-        <button type="button" class="modal-btn confirm" id="saveEditTravelInfoBtn">保存</button>
+        <button type="button" class="modal-btn confirm" id="saveEditTravelInfoBtn" onclick="handleSaveTravelInfo(event)">保存</button>
       </div>
     </div>
   </div>
@@ -1740,10 +1783,6 @@
     const tripHeaderEl = document.getElementById('tripHeader');
     const tripTitleEl = document.getElementById('tripTitle');
     const tripDateDisplayEl = document.getElementById('tripDateDisplay');
-    const editTripTitleModal = document.getElementById('editTripTitleModal');
-    const editTripTitleInput = document.getElementById('editTripTitleInput');
-    const cancelEditTripTitleBtn = document.getElementById('cancelEditTripTitleBtn');
-    const saveEditTripTitleBtn = document.getElementById('saveEditTripTitleBtn');
     const membersSectionTitleEl = document.getElementById('membersSectionTitle');
     const editMembersSectionTitleModal = document.getElementById('editMembersSectionTitleModal');
     const editMembersSectionTitleInput = document.getElementById('editMembersSectionTitleInput');
@@ -1784,7 +1823,8 @@
     const memberPendingModal = document.getElementById('memberPendingModal');
     const memberPendingTitle = document.getElementById('memberPendingTitle');
     const memberPendingList = document.getElementById('memberPendingList');
-    const memberPendingEmpty = document.getElementById('memberPendingEmpty');
+    const memberPendingPercent = document.getElementById('memberPendingPercent');
+    const memberPendingEncourage = document.getElementById('memberPendingEncourage');
     const closeMemberPendingBtn = document.getElementById('closeMemberPendingBtn');
     const memberActionModal = document.getElementById('memberActionModal');
     const memberActionTitle = document.getElementById('memberActionTitle');
@@ -1815,17 +1855,6 @@
     const homeRecommendBtn = document.getElementById('homeRecommendBtn');
     const homeFeedbackBtn = document.getElementById('homeFeedbackBtn');
     const backToHomeBtn = document.getElementById('backToHomeBtn');
-    const travelActionModal = document.getElementById('travelActionModal');
-    const travelActionTitle = document.getElementById('travelActionTitle');
-    const travelActionRenameBtn = document.getElementById('travelActionRenameBtn');
-    const travelActionDatesBtn = document.getElementById('travelActionDatesBtn');
-    const travelActionDeleteBtn = document.getElementById('travelActionDeleteBtn');
-    const cancelTravelActionBtn = document.getElementById('cancelTravelActionBtn');
-    const editTravelDatesModal = document.getElementById('editTravelDatesModal');
-    const editTravelStartDateInput = document.getElementById('editTravelStartDateInput');
-    const editTravelEndDateInput = document.getElementById('editTravelEndDateInput');
-    const cancelEditTravelDatesBtn = document.getElementById('cancelEditTravelDatesBtn');
-    const saveEditTravelDatesBtn = document.getElementById('saveEditTravelDatesBtn');
     const travelSettingsBtn = document.getElementById('travelSettingsBtn');
     const travelSettingsModal = document.getElementById('travelSettingsModal');
     const travelSettingsCoverBtn = document.getElementById('travelSettingsCoverBtn');
@@ -1839,10 +1868,10 @@
     const travelCoverCancelBtn = document.getElementById('travelCoverCancelBtn');
     const editTravelInfoModal = document.getElementById('editTravelInfoModal');
     const editTravelInfoNameInput = document.getElementById('editTravelInfoNameInput');
+    const editTravelInfoStartDateRow = document.getElementById('editTravelInfoStartDateRow');
+    const editTravelInfoEndDateRow = document.getElementById('editTravelInfoEndDateRow');
     const editTravelInfoStartDateInput = document.getElementById('editTravelInfoStartDateInput');
     const editTravelInfoEndDateInput = document.getElementById('editTravelInfoEndDateInput');
-    const editTravelInfoStartDatePickerBtn = document.getElementById('editTravelInfoStartDatePickerBtn');
-    const editTravelInfoEndDatePickerBtn = document.getElementById('editTravelInfoEndDatePickerBtn');
     const editTravelInfoStartDatePicker = document.getElementById('editTravelInfoStartDatePicker');
     const editTravelInfoEndDatePicker = document.getElementById('editTravelInfoEndDatePicker');
     const cancelEditTravelInfoBtn = document.getElementById('cancelEditTravelInfoBtn');
@@ -1919,9 +1948,6 @@
     let tripTitle = '';
     let membersSectionTitle = DEFAULT_MEMBERS_SECTION_TITLE;
     let collapsedCategories = {};
-    let travelActionTargetId = null;
-    let editingTravelDatesId = null;
-    let editingTravelNameId = null;
     let editingTravelInfoId = null;
     let editingItemId = null;
     let editingMemberId = null;
@@ -2155,41 +2181,6 @@
         return `${y}.${m}.${d}`;
       }
       return raw;
-    }
-
-    function openEditTripTitleModal() {
-      editingTravelNameId = null;
-      editTripTitleInput.value = isTripTitleUnset() ? '' : tripTitle.trim();
-      editTripTitleModal.classList.add('show');
-      editTripTitleInput.focus();
-      if (!isTripTitleUnset()) editTripTitleInput.select();
-    }
-
-    function closeEditTripTitleModal() {
-      editingTravelNameId = null;
-      editTripTitleModal.classList.remove('show');
-    }
-
-    function saveEditedTripTitle() {
-      const nextTitle = editTripTitleInput.value.trim();
-      const normalized = nextTitle && nextTitle !== TRIP_TITLE_PLACEHOLDER ? nextTitle : '';
-      if (editingTravelNameId) {
-        const travel = getTravelById(editingTravelNameId);
-        if (travel && normalized !== (travel.name || '')) {
-          travel.name = normalized;
-          saveTravels();
-          renderHomePage();
-        }
-        editingTravelNameId = null;
-        closeEditTripTitleModal();
-        return;
-      }
-      if (normalized !== tripTitle) {
-        tripTitle = normalized;
-        saveTripTitle();
-        renderTripTitle();
-      }
-      closeEditTripTitleModal();
     }
 
     function saveMembersSectionTitle() {
@@ -2533,6 +2524,7 @@
       let insertIndicator = null;
       let scrollRaf = null;
       let savedBodyOverflow = null;
+      let savedScrollY = 0;
       let endListenersAttached = false;
 
       function getCategoryCards() {
@@ -2657,7 +2649,7 @@
         s.insertIndex = findInsertIndex(s.lastClientY, card);
         updateInsertIndicator(s.insertIndex);
         moveFloat(s.lastClientX, s.lastClientY);
-        startEdgeScrollLoop();
+        if (s.pointerType !== 'touch') startEdgeScrollLoop();
       }
 
       function applyCategoryReorder(fromIndex, insertIndex) {
@@ -3262,10 +3254,6 @@
       return !(item.completedOwners || []).includes(ownerName);
     }
 
-    function getMemberPendingItems(memberName) {
-      return checklistItems.filter(item => isOwnerPendingForItem(item, memberName));
-    }
-
     function sortItemsByCategoryOrder(items) {
       const orderMap = new Map(categories.map((cat, index) => [cat, index]));
       return [...items].sort((a, b) => {
@@ -3276,21 +3264,36 @@
       });
     }
 
+    function getMemberAssignedItems(memberName) {
+      return checklistItems.filter(item => (item.owners || []).includes(memberName));
+    }
+
+    function getMemberCompletionPercent(memberName) {
+      const assigned = getMemberAssignedItems(memberName);
+      if (!assigned.length) return 100;
+      const completed = assigned.filter(item => !isOwnerPendingForItem(item, memberName)).length;
+      return Math.round((completed / assigned.length) * 100);
+    }
+
+    function getMemberEncouragementText(percent) {
+      if (percent >= 100) return '全部准备完成 🎉';
+      if (percent >= 80) return '快完成啦 🌞';
+      if (percent >= 40) return '准备得不错 ✈️';
+      return '刚刚开始准备 🌱';
+    }
+
+    function updateMemberPendingSummary(memberName) {
+      const percent = getMemberCompletionPercent(memberName);
+      memberPendingPercent.textContent = `${percent}%`;
+      memberPendingEncourage.textContent = getMemberEncouragementText(percent);
+    }
+
     function renderMemberPendingList(memberName) {
-      const pending = sortItemsByCategoryOrder(
-        checklistItems.filter(item => (item.owners || []).includes(memberName))
-      );
+      const assigned = sortItemsByCategoryOrder(getMemberAssignedItems(memberName));
       memberPendingList.innerHTML = '';
-      if (!pending.length) {
-        memberPendingEmpty.hidden = false;
-        memberPendingEmpty.textContent = '✓ 已准备完成';
-        return;
-      }
-      const hasPending = pending.some(item => isOwnerPendingForItem(item, memberName));
-      memberPendingEmpty.hidden = !hasPending;
-      memberPendingEmpty.textContent = hasPending ? '还未全部准备完成' : '✓ 已准备完成';
-      memberPendingTitle.textContent = hasPending ? `${memberName} 还没准备` : `${memberName} 已准备完成`;
-      pending.forEach(item => {
+      memberPendingTitle.textContent = `${memberName} 的打包清单`;
+      updateMemberPendingSummary(memberName);
+      assigned.forEach(item => {
         const li = document.createElement('li');
         li.className = 'member-pending-item';
         const toggleBtn = document.createElement('button');
@@ -3319,15 +3322,12 @@
       const member = members.find(m => m.id === memberId);
       if (!member) return;
       renderMemberPendingList(member.name);
-      const hasPending = getMemberPendingItems(member.name).length > 0;
-      memberPendingTitle.textContent = hasPending ? `${member.name} 还没准备` : `${member.name} 已准备完成`;
       memberPendingModal.classList.add('show');
     }
 
     function closeMemberPendingModal() {
       memberPendingModal.classList.remove('show');
       memberPendingList.innerHTML = '';
-      memberPendingEmpty.hidden = true;
     }
 
     function openMemberActionModal(memberId) {
@@ -4009,15 +4009,6 @@
         openEditTravelInfoModal(uiState.currentTravelId);
       }
     });
-    cancelEditTripTitleBtn.addEventListener('click', closeEditTripTitleModal);
-    saveEditTripTitleBtn.addEventListener('click', saveEditedTripTitle);
-    editTripTitleInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') saveEditedTripTitle();
-    });
-    editTripTitleModal.addEventListener('click', (event) => {
-      if (event.target === editTripTitleModal) closeEditTripTitleModal();
-    });
-
     bindUiLongPress(membersSectionTitleEl, {
       onLongPress: openEditMembersSectionTitleModal
     });
@@ -4090,7 +4081,7 @@
       const daysLeft = getDaysLeft(startDate);
       if (daysLeft === null) return null;
       if (daysLeft < 0) return { color: '#AAB6CC', fontWeight: '400' };
-      if (daysLeft === 0) return { color: '#FFD86B', fontWeight: '700' };
+      if (daysLeft === 0) return { color: '#D97706', fontWeight: '700' };
       if (daysLeft === 1) return { color: '#FF8C42', fontWeight: '600' };
       if (daysLeft <= 7) return { color: '#F4A261', fontWeight: '600' };
       if (daysLeft <= 30) return { color: '#6B93D6', fontWeight: '400' };
@@ -4135,11 +4126,91 @@
 
     function openDatePickerInput(pickerInput) {
       if (!pickerInput) return;
-      if (typeof pickerInput.showPicker === 'function') {
-        pickerInput.showPicker();
-      } else {
-        pickerInput.click();
+      try {
+        if (typeof pickerInput.showPicker === 'function') {
+          pickerInput.showPicker();
+          return;
+        }
+      } catch (_) { /* ignore */ }
+      try {
+        pickerInput.focus({ preventScroll: true });
+      } catch (_) { /* ignore */ }
+      pickerInput.click();
+    }
+
+    const DATE_MANUAL_LONG_PRESS_MS = 420;
+
+    function bindTravelInfoDateField(row, textInput, pickerInput) {
+      if (!row || !textInput || !pickerInput) return;
+      let manualTimer = null;
+
+      function clearManualTimer() {
+        if (manualTimer) {
+          clearTimeout(manualTimer);
+          manualTimer = null;
+        }
       }
+
+      function openPicker() {
+        if (row.classList.contains('is-editing')) return;
+        normalizeDateInputField(textInput, pickerInput);
+        openDatePickerInput(pickerInput);
+      }
+
+      function enterManualEdit() {
+        row.classList.add('is-editing');
+        textInput.focus();
+        try {
+          const len = textInput.value.length;
+          textInput.setSelectionRange(len, len);
+        } catch (_) { /* ignore */ }
+      }
+
+      row.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (row.classList.contains('is-editing') && event.target === textInput) return;
+        openPicker();
+      });
+
+      textInput.addEventListener('pointerdown', (event) => {
+        event.stopPropagation();
+        clearManualTimer();
+        manualTimer = window.setTimeout(() => {
+          manualTimer = null;
+          enterManualEdit();
+        }, DATE_MANUAL_LONG_PRESS_MS);
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
+        textInput.addEventListener(type, clearManualTimer);
+      });
+
+      textInput.addEventListener('blur', () => {
+        row.classList.remove('is-editing');
+        normalizeDateInputField(textInput, pickerInput);
+      });
+
+      textInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          normalizeDateInputField(textInput, pickerInput);
+          textInput.blur();
+        }
+      });
+
+      pickerInput.addEventListener('change', () => {
+        const iso = normalizeToIsoDate(pickerInput.value);
+        textInput.value = iso;
+        pickerInput.value = iso;
+        row.classList.remove('is-editing');
+      });
+
+      pickerInput.addEventListener('input', () => {
+        const iso = normalizeToIsoDate(pickerInput.value);
+        if (!iso) return;
+        textInput.value = iso;
+        pickerInput.value = iso;
+      });
     }
 
     function getTravelItemProgress(travel) {
@@ -4308,53 +4379,32 @@
       renderHomePage();
     }
 
-    function openTravelActionModal(travelId) {
-      const travel = getTravelById(travelId);
-      if (!travel) return;
-      travelActionTargetId = travelId;
-      travelActionTitle.textContent = getDisplayTravelName(travel);
-      travelActionModal.classList.add('show');
-    }
-
-    function closeTravelActionModal() {
-      travelActionTargetId = null;
-      travelActionModal.classList.remove('show');
-    }
-
-    function openEditTravelDatesModal(travelId) {
-      const travel = getTravelById(travelId);
-      if (!travel) return;
-      editingTravelDatesId = travelId;
-      editTravelStartDateInput.value = travel.startDate || '';
-      editTravelEndDateInput.value = travel.endDate || '';
-      editTravelDatesModal.classList.add('show');
-    }
-
-    function closeEditTravelDatesModal() {
-      editingTravelDatesId = null;
-      editTravelDatesModal.classList.remove('show');
-    }
-
-    function saveEditedTravelDates() {
-      if (!editingTravelDatesId) return;
-      const travel = getTravelById(editingTravelDatesId);
-      if (!travel) return;
-      travel.startDate = editTravelStartDateInput.value || '';
-      travel.endDate = editTravelEndDateInput.value || '';
-      saveTravels();
+    function renderTravelList() {
       renderHomePage();
-      closeEditTravelDatesModal();
+    }
+
+    function renderCurrentTravel() {
+      const travel = getCurrentTravel();
+      if (!travel) return;
+      syncTravelToGlobals(travel);
+      renderTripTitle();
     }
 
     function openEditTravelInfoModal(travelId = uiState.currentTravelId) {
       const travel = getTravelById(travelId);
-      if (!travel) return;
-      editingTravelInfoId = travelId;
+      if (!travel) {
+        console.error('[travel-info] open failed: travel not found', travelId);
+        return;
+      }
+      editingTravelInfoId = travel.id;
+      editTravelInfoModal.dataset.editingTravelId = travel.id;
       editTravelInfoNameInput.value = String(travel.name || '').trim();
       editTravelInfoStartDateInput.value = travel.startDate || '';
       editTravelInfoEndDateInput.value = travel.endDate || '';
       editTravelInfoStartDatePicker.value = travel.startDate || '';
       editTravelInfoEndDatePicker.value = travel.endDate || '';
+      editTravelInfoStartDateRow.classList.remove('is-editing');
+      editTravelInfoEndDateRow.classList.remove('is-editing');
       editTravelInfoModal.classList.add('show');
       editTravelInfoNameInput.focus();
       editTravelInfoNameInput.select();
@@ -4362,27 +4412,59 @@
 
     function closeEditTravelInfoModal() {
       editingTravelInfoId = null;
+      delete editTravelInfoModal.dataset.editingTravelId;
       editTravelInfoModal.classList.remove('show');
     }
 
-    function saveEditedTravelInfo() {
-      if (!editingTravelInfoId) return;
-      const travel = getTravelById(editingTravelInfoId);
-      if (!travel) return;
-      const nextName = editTravelInfoNameInput.value.trim();
-      const startDate = normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
-      const endDate = normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
-      travel.name = nextName && nextName !== TRIP_TITLE_PLACEHOLDER ? nextName : '';
-      travel.startDate = startDate;
-      travel.endDate = endDate;
-      if (uiState.currentTravelId === travel.id) {
-        syncTravelToGlobals(travel);
-        renderTripTitle();
+    function handleSaveTravelInfo(event) {
+      console.log('save clicked');
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
       }
-      saveTravels();
-      renderHomePage();
-      closeEditTravelInfoModal();
+
+      const travelId = editingTravelInfoId || editTravelInfoModal.dataset.editingTravelId || null;
+      if (!travelId) {
+        console.error('[travel-info] save failed: missing travel id');
+        return;
+      }
+
+      const travel = getTravelById(travelId);
+      if (!travel) {
+        console.error('[travel-info] save failed: travel not found', travelId);
+        return;
+      }
+
+      try {
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+
+        editTravelInfoStartDateRow.classList.remove('is-editing');
+        editTravelInfoEndDateRow.classList.remove('is-editing');
+
+        const nextName = editTravelInfoNameInput.value.trim();
+        const startDate = normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
+        const endDate = normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
+
+        travel.name = nextName && nextName !== TRIP_TITLE_PLACEHOLDER ? nextName : '';
+        travel.startDate = startDate;
+        travel.endDate = endDate;
+
+        console.log(travel);
+
+        saveTravels();
+        renderTravelList();
+        if (uiState.currentTravelId === travel.id) {
+          renderCurrentTravel();
+        }
+        closeEditTravelInfoModal();
+      } catch (err) {
+        console.error('[travel-info] save failed:', err);
+      }
     }
+
+    window.handleSaveTravelInfo = handleSaveTravelInfo;
 
     function openTravelSettingsModal() {
       if (!uiState.currentTravelId) return;
@@ -4529,16 +4611,6 @@
       renderMemberList();
     }
 
-    function openEditTravelNameFromHome(travelId) {
-      const travel = getTravelById(travelId);
-      if (!travel) return;
-      editingTravelNameId = travelId;
-      editTripTitleInput.value = isTravelNameUnset(travel.name) ? '' : travel.name.trim();
-      editTripTitleModal.classList.add('show');
-      editTripTitleInput.focus();
-      if (!isTravelNameUnset(travel.name)) editTripTitleInput.select();
-    }
-
     function deleteTravelById(travelId) {
       travels = travels.filter(t => t.id !== travelId);
       travels.forEach((t, i) => { t.order = i; });
@@ -4607,9 +4679,6 @@
         nameEl.className = 'travel-card-name';
         if (isTravelNameUnset(travel.name)) nameEl.classList.add('placeholder');
         nameEl.textContent = getDisplayTravelName(travel);
-        nameEl.setAttribute('role', 'button');
-        nameEl.setAttribute('tabindex', '0');
-        nameEl.title = '长按更多操作';
         const dragHandle = document.createElement('div');
         dragHandle.className = 'travel-card-drag-handle';
         dragHandle.setAttribute('aria-hidden', 'true');
@@ -4657,18 +4726,9 @@
         card.appendChild(thumb);
         card.appendChild(body);
 
-        bindUiLongPress(nameEl, {
-          onPointerDown: (event) => {
-            travelListReorder.cancelPending();
-            event.stopPropagation();
-          },
-          onTap: () => enterTravel(travel.id),
-          onLongPress: () => openTravelActionModal(travel.id)
-        });
-
         card.addEventListener('click', (event) => {
           if (event.target.closest('.travel-card-drag-handle')) return;
-          if (event.target.closest('.travel-card-name')) return;
+          travelListReorder.cancelPending();
           enterTravel(travel.id);
         });
 
@@ -4688,6 +4748,7 @@
       let insertIndicator = null;
       let scrollRaf = null;
       let savedBodyOverflow = null;
+      let savedScrollY = 0;
       let endListenersAttached = false;
 
       function getTravelCards() {
@@ -4727,13 +4788,31 @@
       }
 
       function lockPageScroll() {
-        if (savedBodyOverflow == null) savedBodyOverflow = document.body.style.overflow;
+        if (savedBodyOverflow != null) return;
+        savedBodyOverflow = document.body.style.overflow;
+        savedScrollY = window.scrollY;
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${savedScrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+        document.body.style.touchAction = 'none';
+        homePage.classList.add('is-travel-reordering');
       }
 
       function forceUnlockPageScroll() {
         document.body.style.overflow = savedBodyOverflow || '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.touchAction = '';
+        homePage.classList.remove('is-travel-reordering');
+        if (savedScrollY) window.scrollTo(0, savedScrollY);
         savedBodyOverflow = null;
+        savedScrollY = 0;
       }
 
       function stopEdgeScrollLoop() {
@@ -4947,6 +5026,7 @@
           const dy = event.clientY - session.startY;
           const distance = Math.hypot(dx, dy);
           if (session.pointerType === 'touch') {
+            event.preventDefault();
             if (distance > TRAVEL_REORDER_MOVE_THRESHOLD && session.longPressTimer) {
               clearTimeout(session.longPressTimer);
               session.longPressTimer = null;
@@ -5065,63 +5145,26 @@
     travelCoverSystemBtn.addEventListener('click', closeTravelCoverModal);
     travelCoverUploadBtn.addEventListener('click', closeTravelCoverModal);
 
-    cancelEditTravelInfoBtn.addEventListener('click', closeEditTravelInfoModal);
-    saveEditTravelInfoBtn.addEventListener('click', saveEditedTravelInfo);
+    cancelEditTravelInfoBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeEditTravelInfoModal();
+    });
     editTravelInfoNameInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') saveEditedTravelInfo();
+      if (event.key === 'Enter') handleSaveTravelInfo(event);
     });
-    editTravelInfoStartDateInput.addEventListener('blur', () => {
-      normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
-    });
-    editTravelInfoEndDateInput.addEventListener('blur', () => {
-      normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
-    });
-    editTravelInfoStartDatePickerBtn.addEventListener('click', () => {
-      normalizeDateInputField(editTravelInfoStartDateInput, editTravelInfoStartDatePicker);
-      openDatePickerInput(editTravelInfoStartDatePicker);
-    });
-    editTravelInfoEndDatePickerBtn.addEventListener('click', () => {
-      normalizeDateInputField(editTravelInfoEndDateInput, editTravelInfoEndDatePicker);
-      openDatePickerInput(editTravelInfoEndDatePicker);
-    });
-    editTravelInfoStartDatePicker.addEventListener('change', () => {
-      const iso = normalizeToIsoDate(editTravelInfoStartDatePicker.value);
-      editTravelInfoStartDateInput.value = iso;
-      editTravelInfoStartDatePicker.value = iso;
-    });
-    editTravelInfoEndDatePicker.addEventListener('change', () => {
-      const iso = normalizeToIsoDate(editTravelInfoEndDatePicker.value);
-      editTravelInfoEndDateInput.value = iso;
-      editTravelInfoEndDatePicker.value = iso;
-    });
+    bindTravelInfoDateField(
+      editTravelInfoStartDateRow,
+      editTravelInfoStartDateInput,
+      editTravelInfoStartDatePicker
+    );
+    bindTravelInfoDateField(
+      editTravelInfoEndDateRow,
+      editTravelInfoEndDateInput,
+      editTravelInfoEndDatePicker
+    );
     editTravelInfoModal.addEventListener('click', (event) => {
       if (event.target === editTravelInfoModal) closeEditTravelInfoModal();
-    });
-
-    cancelTravelActionBtn.addEventListener('click', closeTravelActionModal);
-    travelActionModal.addEventListener('click', (event) => {
-      if (event.target === travelActionModal) closeTravelActionModal();
-    });
-    travelActionRenameBtn.addEventListener('click', () => {
-      const travelId = travelActionTargetId;
-      closeTravelActionModal();
-      if (travelId) openEditTravelNameFromHome(travelId);
-    });
-    travelActionDatesBtn.addEventListener('click', () => {
-      const travelId = travelActionTargetId;
-      closeTravelActionModal();
-      if (travelId) openEditTravelDatesModal(travelId);
-    });
-    travelActionDeleteBtn.addEventListener('click', () => {
-      const travelId = travelActionTargetId;
-      closeTravelActionModal();
-      if (!travelId) return;
-      openConfirmDelete(() => deleteTravelById(travelId), 'travel');
-    });
-    cancelEditTravelDatesBtn.addEventListener('click', closeEditTravelDatesModal);
-    saveEditTravelDatesBtn.addEventListener('click', saveEditedTravelDates);
-    editTravelDatesModal.addEventListener('click', (event) => {
-      if (event.target === editTravelDatesModal) closeEditTravelDatesModal();
     });
 
     loadTravels();
