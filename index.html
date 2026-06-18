@@ -1452,7 +1452,7 @@
     .owner-radio-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       padding: 12px 14px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-btn);
@@ -1462,8 +1462,8 @@
     }
 
     .owner-radio-row input[type="radio"] {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       margin: 0;
       accent-color: var(--color-accent);
       flex-shrink: 0;
@@ -1696,8 +1696,8 @@
       <input id="itemNameInput" type="text" placeholder="例如：充电器" maxlength="64" />
       <label for="categorySelect">所属分类</label>
       <select id="categorySelect"></select>
-      <label>负责人</label>
-      <div class="owner-radio-list" id="addItemOwnerOptions"></div>
+      <label>负责人（可多选）</label>
+      <div class="owner-options" id="addItemOwnerOptions"></div>
     </div>
     <div class="edit-travel-info-actions">
       <button type="button" class="modal-btn cancel" id="cancelAddBtn">取消</button>
@@ -3737,7 +3737,9 @@
     }
 
     function renderAddItemOwnerRadios() {
-      renderOwnerRadioList(addItemOwnerOptions, 'addItemOwner');
+      renderOwnerCheckboxes(addItemOwnerOptions, {
+        selectedOwnerIds: getDefaultOwnerIds()
+      });
     }
 
     function renderQuickAddItemOwnerChips() {
@@ -4160,10 +4162,8 @@
         return;
       }
       if (!members.length) return;
-      const { owners, isAllMembers } = readAddItemOwnerSelection();
-      if (!owners.length) return;
-      let ownerIds = namesToOwnerIds(owners);
-      if (isAllMembers) ownerIds = members.map(m => m.id);
+      const ownerIds = readOwnerIdsFromContainer(addItemOwnerOptions);
+      if (!ownerIds.length) return;
 
       const card = categoryCards[category];
       if (!card) return;
