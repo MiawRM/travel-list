@@ -3382,7 +3382,8 @@
       if (!member) return [];
       return checklistItems.filter(item => {
         normalizeItemOwners(item);
-        return (item.ownerIds || []).includes(member.id);
+        const ids = item.ownerIds || [];
+        return ids.includes('all') || ids.includes(member.id);
       });
     }
 
@@ -3492,17 +3493,7 @@
       const oldName = member.name;
       if (oldName !== nextName) {
         member.name = nextName;
-        checklistItems.forEach(item => {
-          if (item.completedOwners) {
-            item.completedOwners = item.completedOwners.map(o => (o === oldName ? nextName : o));
-          }
-          if (item.isAllMembers) {
-            syncItemAllMembersOwners(item);
-          } else if (item.owners && item.owners.length) {
-            item.owners = item.owners.map(o => (o === oldName ? nextName : o));
-          }
-          item.completed = isItemAllOwnersComplete(item);
-        });
+        checklistItems.forEach(syncItemOwnersFromIds);
         saveMembers();
         saveChecklistItems();
         renderMemberList();
@@ -3550,33 +3541,51 @@
 
     function readOwnerIdsFromContainer(container) {
       if (!container) return [];
+      const allCb = container.querySelector('.owner-all-checkbox');
+      if (allCb && allCb.checked) return ['all'];
       return Array.from(container.querySelectorAll('input[name="owners"]:checked'))
         .map(cb => cb.value)
         .filter(Boolean);
     }
 
+    function getEffectiveOwnerIds(item) {
+      const ids = item.ownerIds || [];
+      if (ids.includes('all')) return members.map(m => m.id);
+      return ids.filter(id => members.some(m => m.id === id));
+    }
+
     function syncItemOwnersFromIds(item) {
       if (!Array.isArray(item.ownerIds)) item.ownerIds = [];
-      item.owners = ownerIdsToNames(item.ownerIds);
+      const effIds = getEffectiveOwnerIds(item);
+      item.owners = effIds.map(getMemberNameById).filter(Boolean);
       if (!Array.isArray(item.completedOwnerIds)) {
         item.completedOwnerIds = namesToOwnerIds(item.completedOwners || []);
       }
-      item.completedOwnerIds = (item.completedOwnerIds || []).filter(id => item.ownerIds.includes(id));
-      item.completedOwners = ownerIdsToNames(item.completedOwnerIds);
+      item.completedOwnerIds = (item.completedOwnerIds || []).filter(id => effIds.includes(id));
+      item.completedOwners = item.completedOwnerIds.map(getMemberNameById).filter(Boolean);
       item.completed = isItemAllOwnersComplete(item);
     }
 
     function normalizeItemOwners(item) {
       if (Array.isArray(item.ownerIds) && item.ownerIds.length) {
-        item.ownerIds = item.ownerIds.filter(id => members.some(m => m.id === id));
+        if (!item.ownerIds.includes('all')) {
+          const valid = item.ownerIds.filter(id => members.some(m => m.id === id));
+          if (members.length >= 2 && valid.length === members.length) {
+            item.ownerIds = ['all'];
+          } else {
+            item.ownerIds = valid;
+          }
+        }
+        delete item.isAllMembers;
         syncItemOwnersFromIds(item);
         return;
       }
       if (item.isAllMembers) {
-        item.ownerIds = members.map(m => m.id);
+        item.ownerIds = ['all'];
       } else {
         item.ownerIds = namesToOwnerIds(item.owners || []);
       }
+      delete item.isAllMembers;
       item.completedOwnerIds = namesToOwnerIds(item.completedOwners || []);
       syncItemOwnersFromIds(item);
     }
@@ -3598,7 +3607,7 @@
     }
 
     function syncAllMembersItems() {
-      checklistItems.forEach(syncItemAllMembersOwners);
+      checklistItems.forEach(syncItemOwnersFromIds);
     }
 
     function normalizeItemAllMembers(item) {
@@ -3634,9 +3643,7 @@
       if (!selectedOwnerIds.length && options.selectedOwners && options.selectedOwners.length) {
         selectedOwnerIds = namesToOwnerIds(options.selectedOwners);
       }
-      if (!selectedOwnerIds.length && options.isAllMembers) {
-        selectedOwnerIds = members.map(m => m.id);
-      }
+      const selectAll = selectedOwnerIds.includes('all') || !!options.isAllMembers;
       const selectMeByDefault = !!options.selectMeByDefault;
       container.innerHTML = '';
       if (!members.length) {
@@ -3669,7 +3676,8 @@
         input.type = 'checkbox';
         input.name = 'owners';
         input.value = m.id;
-        input.checked = selectedOwnerIds.includes(m.id)
+        input.checked = selectAll
+          || selectedOwnerIds.includes(m.id)
           || (selectMeByDefault && selectedOwnerIds.length === 0 && m.name === '我');
         const mini = document.createElement('span');
         mini.className = 'owner-chip-avatar';
@@ -3964,16 +3972,18 @@
       if (!ownerIds.length) return;
       const card = categoryCards[category];
       if (!card) return;
-      checklistItems.push({
+      const newItem = {
         id: createId(),
         name,
         category,
         ownerIds,
-        owners: ownerIdsToNames(ownerIds),
+        owners: [],
         completedOwners: [],
         completedOwnerIds: [],
         completed: false
-      });
+      };
+      syncItemOwnersFromIds(newItem);
+      checklistItems.push(newItem);
       saveChecklistItems();
       renderChecklistItems();
       syncGlobalsToCurrentTravel();
@@ -4011,13 +4021,9 @@
         return;
       }
       item.name = nextName;
-      const { ownerIds, owners } = readOwnersFromContainer(editOwnerOptions);
-      item.ownerIds = ownerIds;
-      item.owners = owners;
-      item.isAllMembers = false;
-      item.completedOwnerIds = (item.completedOwnerIds || []).filter(id => ownerIds.includes(id));
-      item.completedOwners = ownerIdsToNames(item.completedOwnerIds);
-      item.completed = isItemAllOwnersComplete(item);
+      item.ownerIds = readOwnerIdsFromContainer(editOwnerOptions);
+      delete item.isAllMembers;
+      syncItemOwnersFromIds(item);
       saveChecklistItems();
       renderChecklistItems();
       closeEditOwnersModal();
@@ -4168,16 +4174,18 @@
       const card = categoryCards[category];
       if (!card) return;
 
-      checklistItems.push({
+      const newItem = {
         id: createId(),
         name,
         category,
         ownerIds,
-        owners: ownerIdsToNames(ownerIds),
+        owners: [],
         completedOwners: [],
         completedOwnerIds: [],
         completed: false
-      });
+      };
+      syncItemOwnersFromIds(newItem);
+      checklistItems.push(newItem);
       saveChecklistItems();
       renderChecklistItems();
       syncGlobalsToCurrentTravel();
@@ -4240,8 +4248,9 @@
         if (!targetItem) return;
 
         if (event.target.checked) {
-          targetItem.completedOwners = [...(targetItem.owners || [])];
-          targetItem.completedOwnerIds = [...(targetItem.ownerIds || [])];
+          const effIds = getEffectiveOwnerIds(targetItem);
+          targetItem.completedOwnerIds = [...effIds];
+          targetItem.completedOwners = effIds.map(getMemberNameById).filter(Boolean);
         } else {
           targetItem.completedOwners = [];
           targetItem.completedOwnerIds = [];
@@ -4825,17 +4834,7 @@
           const oldName = member.name;
           if (oldName !== nextName) {
             member.name = nextName;
-            checklistItems.forEach(item => {
-              if (item.completedOwners) {
-                item.completedOwners = item.completedOwners.map(o => (o === oldName ? nextName : o));
-              }
-              if (item.isAllMembers) {
-                syncItemAllMembersOwners(item);
-              } else if (item.owners && item.owners.length) {
-                item.owners = item.owners.map(o => (o === oldName ? nextName : o));
-              }
-              item.completed = isItemAllOwnersComplete(item);
-            });
+            checklistItems.forEach(syncItemOwnersFromIds);
             saveMembers();
             saveChecklistItems();
             renderMemberList();
