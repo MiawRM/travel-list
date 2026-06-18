@@ -3267,9 +3267,12 @@
         session.lastY = event.clientY;
         if (!session.dragging) {
           const distance = Math.hypot(event.clientX - session.startX, event.clientY - session.startY);
-          if (distance > MEMBER_STRIP_REORDER_MOVE_THRESHOLD && session.longPressTimer) {
-            clearTimeout(session.longPressTimer);
-            session.longPressTimer = null;
+          if (distance > MEMBER_STRIP_REORDER_MOVE_THRESHOLD) {
+            session.moved = true;
+            if (session.longPressTimer) {
+              clearTimeout(session.longPressTimer);
+              session.longPressTimer = null;
+            }
           }
           return;
         }
@@ -3289,7 +3292,11 @@
         if (!session || (event.pointerId != null && event.pointerId !== session.pointerId)) return;
         const dragged = !!session.dragging;
         const memberId = session.memberId;
-        const wasTap = !dragged && !session.longPressTriggered;
+        const endX = typeof event.clientX === 'number' ? event.clientX : session.lastX;
+        const endY = typeof event.clientY === 'number' ? event.clientY : session.lastY;
+        const dx = Math.abs(endX - session.startX);
+        const dy = Math.abs(endY - session.startY);
+        const wasTap = !dragged && !session.longPressTriggered && !session.moved && dx < 10 && dy < 10;
         cleanup(true);
         if (dragged) return;
         if (wasTap && memberId) openMemberPendingModal(memberId);
@@ -3312,6 +3319,7 @@
           fromIndex: -1,
           insertIndex: 0,
           dragging: false,
+          moved: false,
           longPressTriggered: false,
           longPressTimer: window.setTimeout(() => {
             if (session && !session.dragging) {
