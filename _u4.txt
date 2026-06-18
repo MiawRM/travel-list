@@ -1,1 +1,0 @@
-      }\n      delete collapsedCategories[oldName];\n\n      if (addItemTargetCategory === oldName) {\n        addItemTargetCategory = nextName;\n      }\n\n      saveCategories();\n      saveChecklistItems();\n

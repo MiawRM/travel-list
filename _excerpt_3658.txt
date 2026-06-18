@@ -1,8 +1,0 @@
-      return { isAllMembers: false, owners: [member.name] };
-    }
-
-    function refreshAddItemOwnerRadiosIfNeeded() {
-      if (uiState.page === 'addItem') renderAddItemOwnerRadios();
-    }
-
-    function openAddMemberModal() {
