@@ -1,0 +1,71 @@
+      saveChecklistItems();
+    }
+
+    function addItemToCategory() {
+      const name = itemNameInput.value.trim();
+      const category = categorySelect.value;
+      if (!name) {
+        itemNameInput.focus();
+        return;
+      }
+      if (!category) {
+        categorySelect.focus();
+        return;
+      }
+      if (!members.length) return;
+      const { owners, isAllMembers } = readAddItemOwnerSelection();
+      if (!owners.length) return;
+
+      const card = categoryCards[category];
+      if (!card) return;
+
+      checklistItems.push({
+        id: createId(),
+        name,
+        category,
+        owners,
+        isAllMembers,
+        completedOwners: [],
+        completed: false
+      });
+      saveChecklistItems();
+      renderChecklistItems();
+      syncGlobalsToCurrentTravel();
+      saveTravels();
+      renderHomePage();
+      leaveAddItemPage();
+    }
+
+    cancelDeleteBtn.addEventListener('click', closeConfirmDelete);
+    confirmDeleteBtn.addEventListener('click', executeConfirmDelete);
+    confirmDeleteModal.addEventListener('click', (event) => {
+      if (event.target === confirmDeleteModal) closeConfirmDelete();
+    });
+
+    addButton.addEventListener('click', () => enterAddItemPage());
+    homeNewTravelBtn.addEventListener('click', createNewTravel);
+    homeInviteBtn.addEventListener('click', openInviteJoinModal);
+    homeRecommendBtn.addEventListener('click', openInviteJoinModal);
+    homeFeedbackBtn.addEventListener('click', openInviteJoinModal);
+    closeInviteJoinBtn.addEventListener('click', closeInviteJoinModal);
+    inviteJoinModal.addEventListener('click', (event) => {
+      if (event.target === inviteJoinModal) closeInviteJoinModal();
+    });
+    cancelAddBtn.addEventListener('click', leaveAddItemPage);
+    confirmAddBtn.addEventListener('click', addItemToCategory);
+    cancelEditOwnersBtn.addEventListener('click', closeEditOwnersModal);
+    saveEditOwnersBtn.addEventListener('click', saveEditedOwners);
+
+    itemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') addItemToCategory();
+    });
+
+    backFromAddItemBtn.addEventListener('click', leaveAddItemPage);
+
+    editOwnersModal.addEventListener('click', (event) => {
+      if (event.target === editOwnersModal) closeEditOwnersModal();
+    });
+
+    editItemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') saveEditedOwners();
+    });

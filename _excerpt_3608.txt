@@ -1,0 +1,58 @@
+    }
+
+    function renderAddItemOwnerRadios() {
+      if (!addItemOwnerOptions) return;
+      addItemOwnerOptions.innerHTML = '';
+      if (!members.length) return;
+      const defaultMember = members.find(m => m.name === '我') || members[0];
+      const defaultId = defaultMember ? defaultMember.id : 'all';
+      members.forEach(member => {
+        const row = document.createElement('label');
+        row.className = 'owner-radio-row';
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'addItemOwner';
+        input.value = member.id;
+        if (member.id === defaultId) input.checked = true;
+        const label = document.createElement('span');
+        label.className = 'owner-radio-label';
+        label.textContent = member.name;
+        row.appendChild(input);
+        row.appendChild(label);
+        addItemOwnerOptions.appendChild(row);
+      });
+      const allRow = document.createElement('label');
+      allRow.className = 'owner-radio-row';
+      const allInput = document.createElement('input');
+      allInput.type = 'radio';
+      allInput.name = 'addItemOwner';
+      allInput.value = 'all';
+      const allLabel = document.createElement('span');
+      allLabel.className = 'owner-radio-label';
+      allLabel.textContent = '所有人';
+      allRow.appendChild(allInput);
+      allRow.appendChild(allLabel);
+      addItemOwnerOptions.appendChild(allRow);
+    }
+
+    function readAddItemOwnerSelection() {
+      const selected = addItemOwnerOptions
+        ? addItemOwnerOptions.querySelector('input[name="addItemOwner"]:checked')
+        : null;
+      if (!selected) {
+        const defaultName = getCurrentUserMemberName();
+        return { isAllMembers: false, owners: defaultName ? [defaultName] : [] };
+      }
+      if (selected.value === 'all') {
+        return { isAllMembers: true, owners: getAllMemberNames() };
+      }
+      const member = members.find(m => m.id === selected.value);
+      if (!member) return { isAllMembers: false, owners: [] };
+      return { isAllMembers: false, owners: [member.name] };
+    }
+
+    function refreshAddItemOwnerRadiosIfNeeded() {
+      if (uiState.page === 'addItem') renderAddItemOwnerRadios();
+    }
+
+    function openAddMemberModal() {

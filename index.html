@@ -829,7 +829,9 @@
 
     #homePage[hidden],
     #travelPage[hidden],
-    #memberManagePage[hidden] {
+    #memberManagePage[hidden],
+    #editTravelInfoPage[hidden],
+    #addItemPage[hidden] {
       display: none !important;
     }
 
@@ -1379,31 +1381,129 @@
       background: var(--bg-page);
     }
 
-    #editTravelInfoModal {
-      z-index: 102;
+    #editTravelInfoPage,
+    #addItemPage {
+      min-height: 100vh;
+      padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     }
 
-    #editTravelInfoModal .modal {
-      position: relative;
-      z-index: 1;
+    .edit-travel-info-page-title {
+      margin: 0 0 20px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-title);
+      text-align: center;
     }
 
-    #editTravelInfoModal .modal-actions {
-      position: relative;
-      z-index: 100;
-      margin-top: 8px;
-      pointer-events: auto;
+    .edit-travel-info-body {
+      padding-bottom: 8px;
     }
 
-    #editTravelInfoModal .modal-actions .modal-btn {
+    .edit-travel-info-body label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--color-title);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .edit-travel-info-body input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      padding: 10px 12px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      background: var(--bg-page);
+      color: var(--color-title);
+      outline: none;
+    }
+
+    .edit-travel-info-body input[type="text"]:focus {
+      border-color: var(--color-accent);
+    }
+
+    .edit-travel-info-body select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      padding: 10px 12px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      background: var(--bg-page);
+      color: var(--color-title);
+      outline: none;
+      appearance: auto;
+    }
+
+    .edit-travel-info-body select:focus {
+      border-color: var(--color-accent);
+    }
+
+    .owner-radio-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .owner-radio-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-btn);
+      background: var(--bg-card);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .owner-radio-row input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--color-accent);
+      flex-shrink: 0;
+    }
+
+    .owner-radio-label {
+      font-size: 16px;
+      color: var(--color-title);
+    }
+
+    .owner-radio-row:has(input:checked) {
+      border-color: var(--color-accent);
+      background: var(--bg-page);
+    }
+
+    .modal .owner-radio-list {
+      margin-bottom: 12px;
+    }
+
+    .edit-travel-info-actions {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      gap: 10px;
+      max-width: 568px;
+      margin: 0 auto;
+      padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+      background: var(--bg-page);
+      box-shadow: 0 -4px 20px rgba(33, 65, 111, 0.06);
+      box-sizing: border-box;
+      z-index: 50;
+    }
+
+    .edit-travel-info-actions .modal-btn {
       flex: 1;
       min-height: 44px;
       border-radius: 16px;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-      z-index: 20;
-      pointer-events: auto;
     }
 
     .date-range-fields {
@@ -1554,6 +1654,57 @@
     <button type="button" class="member-manage-add" id="memberManageAddBtn">＊ 新增成员</button>
   </div>
 
+  <div id="editTravelInfoPage" hidden>
+    <div class="travel-toolbar">
+      <button type="button" class="back-btn" id="backFromEditTravelInfoBtn">← 返回</button>
+    </div>
+    <h2 class="edit-travel-info-page-title">编辑旅行信息</h2>
+    <div class="edit-travel-info-body">
+      <label for="editTravelInfoNameInput">旅行名称</label>
+      <input id="editTravelInfoNameInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
+      <div class="date-range-fields">
+        <div>
+          <span class="date-field-label">开始日期</span>
+          <div class="date-input-row" id="editTravelInfoStartDateRow">
+            <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
+            <button type="button" class="date-picker-trigger" aria-label="选择开始日期">📅</button>
+            <input id="editTravelInfoStartDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
+          </div>
+        </div>
+        <div>
+          <span class="date-field-label">结束日期</span>
+          <div class="date-input-row" id="editTravelInfoEndDateRow">
+            <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
+            <button type="button" class="date-picker-trigger" aria-label="选择结束日期">📅</button>
+            <input id="editTravelInfoEndDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="edit-travel-info-actions">
+      <button type="button" class="modal-btn cancel" id="cancelEditTravelInfoBtn">取消</button>
+      <button type="button" class="modal-btn confirm" id="saveEditTravelInfoBtn" onclick="handleSaveTravelInfo(event)">保存</button>
+    </div>
+  </div>
+  <div id="addItemPage" hidden>
+    <div class="travel-toolbar">
+      <button type="button" class="back-btn" id="backFromAddItemBtn">← 返回</button>
+    </div>
+    <h2 class="edit-travel-info-page-title">添加物品</h2>
+    <div class="edit-travel-info-body">
+      <label for="itemNameInput">物品名称</label>
+      <input id="itemNameInput" type="text" placeholder="例如：充电器" maxlength="64" />
+      <label for="categorySelect">所属分类</label>
+      <select id="categorySelect"></select>
+      <label>负责人</label>
+      <div class="owner-radio-list" id="addItemOwnerOptions"></div>
+    </div>
+    <div class="edit-travel-info-actions">
+      <button type="button" class="modal-btn cancel" id="cancelAddBtn">取消</button>
+      <button type="button" class="modal-btn confirm" id="confirmAddBtn">保存</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="inviteJoinModal">
     <div class="modal">
       <h3>邀请功能开发中 ✈️</h3>
@@ -1581,26 +1732,16 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="addItemModal">
+  <div class="modal-overlay" id="quickAddItemModal">
     <div class="modal">
-      <h3 id="addItemModalTitle">新增物品</h3>
-
-      <label for="itemNameInput">物品名称</label>
-      <input id="itemNameInput" type="text" placeholder="例如：充电器" />
-
-      <div id="categorySelectGroup">
-        <label for="categorySelect">所属分类</label>
-        <select id="categorySelect"></select>
-      </div>
-
-      <div id="ownerOptionsGroup">
-        <label>负责人（可多选）</label>
-        <div class="owner-options" id="ownerOptions"></div>
-      </div>
-
+      <h3 id="quickAddItemModalTitle">添加到</h3>
+      <label for="quickAddItemNameInput">物品名称</label>
+      <input id="quickAddItemNameInput" type="text" placeholder="例如：充电器" maxlength="64" />
+      <label>负责人（可多选）</label>
+      <div class="owner-options" id="quickAddItemOwnerOptions"></div>
       <div class="modal-actions">
-        <button class="modal-btn cancel" id="cancelAddBtn">取消</button>
-        <button class="modal-btn confirm" id="confirmAddBtn">保存</button>
+        <button type="button" class="modal-btn cancel" id="cancelQuickAddBtn">取消</button>
+        <button type="button" class="modal-btn confirm" id="confirmQuickAddBtn">添加</button>
       </div>
     </div>
   </div>
@@ -1742,37 +1883,6 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="editTravelInfoModal">
-    <div class="modal">
-      <h3>编辑旅行信息</h3>
-      <label for="editTravelInfoNameInput">旅行名称</label>
-      <input id="editTravelInfoNameInput" type="text" placeholder="给你的旅行取个名字吧～" maxlength="32" />
-      <label>旅行时间</label>
-      <div class="date-range-fields">
-        <div>
-          <span class="date-field-label">开始日期</span>
-          <div class="date-input-row" id="editTravelInfoStartDateRow">
-            <input id="editTravelInfoStartDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
-            <button type="button" class="date-picker-trigger" aria-label="选择开始日期">📅</button>
-            <input id="editTravelInfoStartDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
-          </div>
-        </div>
-        <div>
-          <span class="date-field-label">结束日期</span>
-          <div class="date-input-row" id="editTravelInfoEndDateRow">
-            <input id="editTravelInfoEndDateInput" type="text" inputmode="numeric" placeholder="YYYY-MM-DD" autocomplete="off" />
-            <button type="button" class="date-picker-trigger" aria-label="选择结束日期">📅</button>
-            <input id="editTravelInfoEndDatePicker" class="date-picker-native" type="date" tabindex="-1" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn cancel" id="cancelEditTravelInfoBtn">取消</button>
-        <button type="button" class="modal-btn confirm" id="saveEditTravelInfoBtn" onclick="handleSaveTravelInfo(event)">保存</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     const addButton = document.getElementById('inviteJoinBtn');
     const inviteJoinModal = document.getElementById('inviteJoinModal');
@@ -1789,15 +1899,19 @@
     const editCategoryNameInput = document.getElementById('editCategoryNameInput');
     const cancelEditCategoryBtn = document.getElementById('cancelEditCategoryBtn');
     const saveEditCategoryBtn = document.getElementById('saveEditCategoryBtn');
-    const modal = document.getElementById('addItemModal');
-    const addItemModalTitle = document.getElementById('addItemModalTitle');
+    const addItemPage = document.getElementById('addItemPage');
     const itemNameInput = document.getElementById('itemNameInput');
     const categorySelect = document.getElementById('categorySelect');
-    const categorySelectGroup = document.getElementById('categorySelectGroup');
-    const ownerOptionsGroup = document.getElementById('ownerOptionsGroup');
-    const ownerOptions = document.getElementById('ownerOptions');
+    const addItemOwnerOptions = document.getElementById('addItemOwnerOptions');
     const cancelAddBtn = document.getElementById('cancelAddBtn');
     const confirmAddBtn = document.getElementById('confirmAddBtn');
+    const backFromAddItemBtn = document.getElementById('backFromAddItemBtn');
+    const quickAddItemModal = document.getElementById('quickAddItemModal');
+    const quickAddItemModalTitle = document.getElementById('quickAddItemModalTitle');
+    const quickAddItemNameInput = document.getElementById('quickAddItemNameInput');
+    const quickAddItemOwnerOptions = document.getElementById('quickAddItemOwnerOptions');
+    const cancelQuickAddBtn = document.getElementById('cancelQuickAddBtn');
+    const confirmQuickAddBtn = document.getElementById('confirmQuickAddBtn');
     const editOwnersModal = document.getElementById('editOwnersModal');
     const editItemNameInput = document.getElementById('editItemNameInput');
     const editOwnerOptions = document.getElementById('editOwnerOptions');
@@ -1863,7 +1977,8 @@
     const travelCoverSystemBtn = document.getElementById('travelCoverSystemBtn');
     const travelCoverUploadBtn = document.getElementById('travelCoverUploadBtn');
     const travelCoverCancelBtn = document.getElementById('travelCoverCancelBtn');
-    const editTravelInfoModal = document.getElementById('editTravelInfoModal');
+    const editTravelInfoPage = document.getElementById('editTravelInfoPage');
+    const backFromEditTravelInfoBtn = document.getElementById('backFromEditTravelInfoBtn');
     const editTravelInfoNameInput = document.getElementById('editTravelInfoNameInput');
     const editTravelInfoStartDateRow = document.getElementById('editTravelInfoStartDateRow');
     const editTravelInfoEndDateRow = document.getElementById('editTravelInfoEndDateRow');
@@ -1950,6 +2065,7 @@
     let editingMemberId = null;
     let editingCategoryOldName = null;
     let addItemTargetCategory = null;
+    let quickAddTargetCategory = null;
     let pendingDeleteAction = null;
     let memberActionTargetId = null;
     let categoryActionTargetName = null;
@@ -2279,6 +2395,10 @@
         addItemTargetCategory = nextName;
       }
 
+      if (quickAddTargetCategory === oldName) {
+        quickAddTargetCategory = nextName;
+      }
+
       saveCategories();
       saveChecklistItems();
       saveCategoryCollapseState();
@@ -2492,7 +2612,7 @@
         header.appendChild(dragHandle);
         header.appendChild(progressEl);
 
-        bindCategoryHeaderControl(addItemBtn, () => openModal(cat));
+        bindCategoryHeaderControl(addItemBtn, () => openQuickAddItemModal(cat));
         bindUiLongPress(nameSpan, {
           onPointerDown: (event) => {
             categoryListReorder.cancelPending();
@@ -2932,8 +3052,10 @@
         id: createId(),
         name,
         category,
+        ownerIds: [],
         owners: [],
         completedOwners: [],
+        completedOwnerIds: [],
         completed: false
       };
     }
@@ -3089,7 +3211,7 @@
         syncAllMembersItems();
         saveChecklistItems();
         renderMemberList();
-        renderOwnerOptions();
+        refreshAddItemOwnerRadiosIfNeeded();
         renderChecklistItems();
         renderHomePage();
         renderMemberManagePage();
@@ -3226,20 +3348,14 @@
       const removedName = members[idx].name;
       members.splice(idx, 1);
       checklistItems.forEach(item => {
-        if (item.completedOwners) {
-          item.completedOwners = item.completedOwners.filter(o => o !== removedName);
-        }
-        if (item.isAllMembers) {
-          syncItemAllMembersOwners(item);
-        } else if (item.owners && item.owners.length) {
-          item.owners = item.owners.filter(o => o !== removedName);
-        }
-        item.completed = isItemAllOwnersComplete(item);
+        if (item.ownerIds) item.ownerIds = item.ownerIds.filter(id => id !== memberId);
+        if (item.completedOwnerIds) item.completedOwnerIds = item.completedOwnerIds.filter(id => id !== memberId);
+        syncItemOwnersFromIds(item);
       });
       saveMembers();
       saveChecklistItems();
       renderMemberList();
-      renderOwnerOptions();
+      refreshAddItemOwnerRadiosIfNeeded();
       renderChecklistItems();
       renderHomePage();
       renderMemberManagePage();
@@ -3262,7 +3378,12 @@
     }
 
     function getMemberAssignedItems(memberName) {
-      return checklistItems.filter(item => (item.owners || []).includes(memberName));
+      const member = members.find(m => m.name === memberName);
+      if (!member) return [];
+      return checklistItems.filter(item => {
+        normalizeItemOwners(item);
+        return (item.ownerIds || []).includes(member.id);
+      });
     }
 
     function getMemberCompletionPercent(memberName) {
@@ -3385,7 +3506,7 @@
         saveMembers();
         saveChecklistItems();
         renderMemberList();
-        renderOwnerOptions();
+        refreshAddItemOwnerRadiosIfNeeded();
         renderChecklistItems();
         renderHomePage();
       }
@@ -3395,6 +3516,69 @@
 
     function getAllMemberNames() {
       return members.map(m => m.name).filter(Boolean);
+    }
+
+    function getCurrentUserMemberName() {
+      const me = members.find(m => m.name === '我');
+      if (me) return me.name;
+      return members[0] ? members[0].name : '';
+    }
+
+    function getMemberIdByName(name) {
+      const m = members.find(x => x.name === name);
+      return m ? m.id : null;
+    }
+
+    function getMemberNameById(id) {
+      const m = members.find(x => x.id === id);
+      return m ? m.name : '';
+    }
+
+    function ownerIdsToNames(ids) {
+      return (ids || []).map(id => getMemberNameById(id)).filter(Boolean);
+    }
+
+    function namesToOwnerIds(names) {
+      return (names || []).map(name => getMemberIdByName(name)).filter(Boolean);
+    }
+
+    function getDefaultOwnerIds() {
+      const me = members.find(m => m.name === '我');
+      if (me) return [me.id];
+      return members[0] ? [members[0].id] : [];
+    }
+
+    function readOwnerIdsFromContainer(container) {
+      if (!container) return [];
+      return Array.from(container.querySelectorAll('input[name="owners"]:checked'))
+        .map(cb => cb.value)
+        .filter(Boolean);
+    }
+
+    function syncItemOwnersFromIds(item) {
+      if (!Array.isArray(item.ownerIds)) item.ownerIds = [];
+      item.owners = ownerIdsToNames(item.ownerIds);
+      if (!Array.isArray(item.completedOwnerIds)) {
+        item.completedOwnerIds = namesToOwnerIds(item.completedOwners || []);
+      }
+      item.completedOwnerIds = (item.completedOwnerIds || []).filter(id => item.ownerIds.includes(id));
+      item.completedOwners = ownerIdsToNames(item.completedOwnerIds);
+      item.completed = isItemAllOwnersComplete(item);
+    }
+
+    function normalizeItemOwners(item) {
+      if (Array.isArray(item.ownerIds) && item.ownerIds.length) {
+        item.ownerIds = item.ownerIds.filter(id => members.some(m => m.id === id));
+        syncItemOwnersFromIds(item);
+        return;
+      }
+      if (item.isAllMembers) {
+        item.ownerIds = members.map(m => m.id);
+      } else {
+        item.ownerIds = namesToOwnerIds(item.owners || []);
+      }
+      item.completedOwnerIds = namesToOwnerIds(item.completedOwners || []);
+      syncItemOwnersFromIds(item);
     }
 
     function ownersMatchAllMembers(owners) {
@@ -3429,13 +3613,9 @@
     }
 
     function readOwnersFromContainer(container) {
-      const allCb = container.querySelector('.owner-all-checkbox');
-      const isAllMembers = !!(allCb && allCb.checked);
-      const owners = isAllMembers
-        ? getAllMemberNames()
-        : Array.from(container.querySelectorAll('input[name="owners"]:checked'))
-          .map(checkbox => checkbox.value);
-      return { owners, isAllMembers };
+      const ownerIds = readOwnerIdsFromContainer(container);
+      const owners = ownerIdsToNames(ownerIds);
+      return { ownerIds, owners, isAllMembers: false };
     }
 
     function syncOwnerAllCheckboxState(container) {
@@ -3450,11 +3630,14 @@
     }
 
     function renderOwnerCheckboxes(container, options = {}) {
-      const {
-        selectedOwners = [],
-        isAllMembers = false,
-        selectFirstByDefault = false
-      } = options;
+      let selectedOwnerIds = options.selectedOwnerIds || [];
+      if (!selectedOwnerIds.length && options.selectedOwners && options.selectedOwners.length) {
+        selectedOwnerIds = namesToOwnerIds(options.selectedOwners);
+      }
+      if (!selectedOwnerIds.length && options.isAllMembers) {
+        selectedOwnerIds = members.map(m => m.id);
+      }
+      const selectMeByDefault = !!options.selectMeByDefault;
       container.innerHTML = '';
       if (!members.length) {
         const hint = document.createElement('div');
@@ -3479,16 +3662,15 @@
       allLabel.appendChild(allNameSpan);
       container.appendChild(allLabel);
 
-      members.forEach((m, index) => {
+      members.forEach((m) => {
         const label = document.createElement('label');
         label.className = 'owner-chip';
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.name = 'owners';
-        input.value = m.name;
-        input.checked = isAllMembers
-          || selectedOwners.includes(m.name)
-          || (selectFirstByDefault && selectedOwners.length === 0 && !isAllMembers && index === 0);
+        input.value = m.id;
+        input.checked = selectedOwnerIds.includes(m.id)
+          || (selectMeByDefault && selectedOwnerIds.length === 0 && m.name === '我');
         const mini = document.createElement('span');
         mini.className = 'owner-chip-avatar';
         mini.style.background = colorForName(m.name);
@@ -3500,18 +3682,79 @@
         label.appendChild(nameSpan);
         container.appendChild(label);
       });
-      if (isAllMembers) {
-        allInput.checked = true;
-        container.querySelectorAll('input[name="owners"]').forEach(cb => {
-          cb.checked = true;
-        });
-      } else {
-        syncOwnerAllCheckboxState(container);
-      }
+      syncOwnerAllCheckboxState(container);
     }
 
-    function renderOwnerOptions() {
-      renderOwnerCheckboxes(ownerOptions, { selectFirstByDefault: true });
+    function renderOwnerRadioList(container, radioName) {
+      if (!container) return;
+      container.innerHTML = '';
+      if (!members.length) return;
+      const defaultMember = members.find(m => m.name === '我') || members[0];
+      const defaultId = defaultMember ? defaultMember.id : 'all';
+      members.forEach(member => {
+        const row = document.createElement('label');
+        row.className = 'owner-radio-row';
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = radioName;
+        input.value = member.id;
+        if (member.id === defaultId) input.checked = true;
+        const label = document.createElement('span');
+        label.className = 'owner-radio-label';
+        label.textContent = member.name;
+        row.appendChild(input);
+        row.appendChild(label);
+        container.appendChild(row);
+      });
+      const allRow = document.createElement('label');
+      allRow.className = 'owner-radio-row';
+      const allInput = document.createElement('input');
+      allInput.type = 'radio';
+      allInput.name = radioName;
+      allInput.value = 'all';
+      const allLabel = document.createElement('span');
+      allLabel.className = 'owner-radio-label';
+      allLabel.textContent = '所有人';
+      allRow.appendChild(allInput);
+      allRow.appendChild(allLabel);
+      container.appendChild(allRow);
+    }
+
+    function readOwnerRadioSelection(container, radioName) {
+      const selected = container
+        ? container.querySelector(`input[name="${radioName}"]:checked`)
+        : null;
+      if (!selected) {
+        const defaultName = getCurrentUserMemberName();
+        return { isAllMembers: false, owners: defaultName ? [defaultName] : [] };
+      }
+      if (selected.value === 'all') {
+        return { isAllMembers: true, owners: getAllMemberNames() };
+      }
+      const member = members.find(m => m.id === selected.value);
+      if (!member) return { isAllMembers: false, owners: [] };
+      return { isAllMembers: false, owners: [member.name] };
+    }
+
+    function renderAddItemOwnerRadios() {
+      renderOwnerRadioList(addItemOwnerOptions, 'addItemOwner');
+    }
+
+    function renderQuickAddItemOwnerChips() {
+      renderOwnerCheckboxes(quickAddItemOwnerOptions, {
+        selectedOwnerIds: getDefaultOwnerIds()
+      });
+    }
+
+    function readAddItemOwnerSelection() {
+      return readOwnerRadioSelection(addItemOwnerOptions, 'addItemOwner');
+    }
+
+    function refreshAddItemOwnerRadiosIfNeeded() {
+      if (uiState.page === 'addItem') renderAddItemOwnerRadios();
+      if (quickAddItemModal && quickAddItemModal.classList.contains('show')) {
+        renderQuickAddItemOwnerChips();
+      }
     }
 
     function openAddMemberModal() {
@@ -3539,7 +3782,7 @@
       syncAllMembersItems();
       saveChecklistItems();
       renderMemberList();
-      renderOwnerOptions();
+      refreshAddItemOwnerRadiosIfNeeded();
       renderChecklistItems();
       renderHomePage();
       renderMemberManagePage();
@@ -3655,33 +3898,86 @@
       inviteJoinModal.classList.remove('show');
     }
 
-    function openModal(categoryName = null) {
+    function hideAddItemPage() {
+      addItemTargetCategory = null;
+      if (addItemPage) addItemPage.hidden = true;
+    }
+
+    function enterAddItemPage(categoryName = null) {
+      if (!uiState.currentTravelId) return;
+      closeTravelSettingsModal();
       addItemTargetCategory = categoryName || null;
-      const fromCategoryBtn = !!categoryName;
-      categorySelectGroup.hidden = fromCategoryBtn;
-      if (ownerOptionsGroup) ownerOptionsGroup.hidden = !fromCategoryBtn;
-      if (addItemModalTitle) {
-        addItemModalTitle.textContent = formatAddItemModalTitle(categoryName);
-      }
-      modal.classList.add('show');
+      travelPage.hidden = true;
+      memberManagePage.hidden = true;
+      editTravelInfoPage.hidden = true;
+      addItemPage.hidden = false;
+      addButton.hidden = true;
+      uiState.page = 'addItem';
+      document.title = '添加物品';
       itemNameInput.value = '';
-      if (categoryName) {
-        syncCategorySelect(categoryName);
-      } else {
-        syncCategorySelect(categories.length ? categories[0] : '');
-      }
-      renderOwnerOptions();
+      syncCategorySelect(categoryName || (categories.length ? categories[0] : ''));
+      if (categoryName) categorySelect.value = categoryName;
+      renderAddItemOwnerRadios();
       itemNameInput.focus();
     }
 
-    function closeModal() {
-      addItemTargetCategory = null;
-      categorySelectGroup.hidden = false;
-      if (ownerOptionsGroup) ownerOptionsGroup.hidden = true;
-      if (addItemModalTitle) {
-        addItemModalTitle.textContent = '新增物品';
+    function leaveAddItemPage() {
+      hideAddItemPage();
+      if (uiState.page === 'addItem') {
+        uiState.page = 'travel';
+        travelPage.hidden = false;
+        addButton.hidden = false;
+        document.title = isTripTitleUnset() ? '旅行清单' : tripTitle.trim();
       }
-      modal.classList.remove('show');
+    }
+
+
+    function openQuickAddItemModal(categoryName) {
+      if (!categoryName || !uiState.currentTravelId) return;
+      quickAddTargetCategory = categoryName;
+      if (quickAddItemModalTitle) {
+        quickAddItemModalTitle.textContent = formatAddItemModalTitle(categoryName);
+      }
+      quickAddItemNameInput.value = '';
+      renderQuickAddItemOwnerChips();
+      quickAddItemModal.classList.add('show');
+      quickAddItemNameInput.focus();
+    }
+
+    function closeQuickAddItemModal() {
+      quickAddTargetCategory = null;
+      quickAddItemModal.classList.remove('show');
+    }
+
+    function addQuickItemToCategory() {
+      const name = quickAddItemNameInput.value.trim();
+      const category = quickAddTargetCategory;
+      if (!name) {
+        quickAddItemNameInput.focus();
+        return;
+      }
+      if (!category) return;
+      if (!members.length) return;
+      const ownerIds = readOwnerIdsFromContainer(quickAddItemOwnerOptions);
+      if (!ownerIds.length) return;
+      const card = categoryCards[category];
+      if (!card) return;
+      checklistItems.push({
+        id: createId(),
+        name,
+        category,
+        ownerIds,
+        owners: ownerIdsToNames(ownerIds),
+        completedOwners: [],
+        completedOwnerIds: [],
+        completed: false
+      });
+      saveChecklistItems();
+      renderChecklistItems();
+      syncGlobalsToCurrentTravel();
+      saveTravels();
+      renderHomePage();
+      closeQuickAddItemModal();
     }
 
     function openEditOwnersModal(itemId) {
@@ -3690,9 +3986,9 @@
       editingItemId = itemId;
       editItemNameInput.value = item.name;
       editOwnersItemLabel.textContent = '负责人（可多选）';
+      normalizeItemOwners(item);
       renderOwnerCheckboxes(editOwnerOptions, {
-        selectedOwners: item.owners || [],
-        isAllMembers: !!item.isAllMembers
+        selectedOwnerIds: item.ownerIds || []
       });
       editOwnersModal.classList.add('show');
       editItemNameInput.focus();
@@ -3713,10 +4009,12 @@
         return;
       }
       item.name = nextName;
-      const { owners, isAllMembers } = readOwnersFromContainer(editOwnerOptions);
-      item.isAllMembers = isAllMembers;
+      const { ownerIds, owners } = readOwnersFromContainer(editOwnerOptions);
+      item.ownerIds = ownerIds;
       item.owners = owners;
-      item.completedOwners = (item.completedOwners || []).filter(name => item.owners.includes(name));
+      item.isAllMembers = false;
+      item.completedOwnerIds = (item.completedOwnerIds || []).filter(id => ownerIds.includes(id));
+      item.completedOwners = ownerIdsToNames(item.completedOwnerIds);
       item.completed = isItemAllOwnersComplete(item);
       saveChecklistItems();
       renderChecklistItems();
@@ -3736,12 +4034,13 @@
     }
 
     function normalizeItemCompletion(item) {
-      normalizeItemAllMembers(item);
+      normalizeItemOwners(item);
       if (!Array.isArray(item.owners)) item.owners = [];
       if (!Array.isArray(item.completedOwners)) item.completedOwners = [];
       item.completedOwners = item.completedOwners.filter(name => item.owners.includes(name));
       if (item.completed && item.owners.length && !item.completedOwners.length) {
         item.completedOwners = [...item.owners];
+        item.completedOwnerIds = namesToOwnerIds(item.completedOwners);
       }
       item.completed = isItemAllOwnersComplete(item);
     }
@@ -3752,6 +4051,7 @@
       const idx = item.completedOwners.indexOf(ownerName);
       if (idx === -1) item.completedOwners.push(ownerName);
       else item.completedOwners.splice(idx, 1);
+      item.completedOwnerIds = namesToOwnerIds(item.completedOwners);
       item.completed = isItemAllOwnersComplete(item);
     }
 
@@ -3850,10 +4150,7 @@
 
     function addItemToCategory() {
       const name = itemNameInput.value.trim();
-      const category = addItemTargetCategory || categorySelect.value;
-      let owners;
-      let isAllMembers;
-
+      const category = categorySelect.value;
       if (!name) {
         itemNameInput.focus();
         return;
@@ -3862,15 +4159,11 @@
         categorySelect.focus();
         return;
       }
-
-      if (ownerOptionsGroup && ownerOptionsGroup.hidden) {
-        if (!members.length) return;
-        owners = [members[0].name];
-        isAllMembers = false;
-      } else {
-        ({ owners, isAllMembers } = readOwnersFromContainer(ownerOptions));
-        if (!owners.length) return;
-      }
+      if (!members.length) return;
+      const { owners, isAllMembers } = readAddItemOwnerSelection();
+      if (!owners.length) return;
+      let ownerIds = namesToOwnerIds(owners);
+      if (isAllMembers) ownerIds = members.map(m => m.id);
 
       const card = categoryCards[category];
       if (!card) return;
@@ -3879,9 +4172,10 @@
         id: createId(),
         name,
         category,
-        owners,
-        isAllMembers,
+        ownerIds,
+        owners: ownerIdsToNames(ownerIds),
         completedOwners: [],
+        completedOwnerIds: [],
         completed: false
       });
       saveChecklistItems();
@@ -3889,7 +4183,7 @@
       syncGlobalsToCurrentTravel();
       saveTravels();
       renderHomePage();
-      closeModal();
+      leaveAddItemPage();
     }
 
     cancelDeleteBtn.addEventListener('click', closeConfirmDelete);
@@ -3898,7 +4192,7 @@
       if (event.target === confirmDeleteModal) closeConfirmDelete();
     });
 
-    addButton.addEventListener('click', () => openModal());
+    addButton.addEventListener('click', () => enterAddItemPage());
     homeNewTravelBtn.addEventListener('click', createNewTravel);
     homeInviteBtn.addEventListener('click', openInviteJoinModal);
     homeRecommendBtn.addEventListener('click', openInviteJoinModal);
@@ -3907,7 +4201,7 @@
     inviteJoinModal.addEventListener('click', (event) => {
       if (event.target === inviteJoinModal) closeInviteJoinModal();
     });
-    cancelAddBtn.addEventListener('click', closeModal);
+    cancelAddBtn.addEventListener('click', leaveAddItemPage);
     confirmAddBtn.addEventListener('click', addItemToCategory);
     cancelEditOwnersBtn.addEventListener('click', closeEditOwnersModal);
     saveEditOwnersBtn.addEventListener('click', saveEditedOwners);
@@ -3916,8 +4210,15 @@
       if (event.key === 'Enter') addItemToCategory();
     });
 
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) closeModal();
+    backFromAddItemBtn.addEventListener('click', leaveAddItemPage);
+
+    cancelQuickAddBtn.addEventListener('click', closeQuickAddItemModal);
+    confirmQuickAddBtn.addEventListener('click', addQuickItemToCategory);
+    quickAddItemNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') addQuickItemToCategory();
+    });
+    quickAddItemModal.addEventListener('click', (event) => {
+      if (event.target === quickAddItemModal) closeQuickAddItemModal();
     });
 
     editOwnersModal.addEventListener('click', (event) => {
@@ -3940,8 +4241,10 @@
 
         if (event.target.checked) {
           targetItem.completedOwners = [...(targetItem.owners || [])];
+          targetItem.completedOwnerIds = [...(targetItem.ownerIds || [])];
         } else {
           targetItem.completedOwners = [];
+          targetItem.completedOwnerIds = [];
         }
         targetItem.completed = event.target.checked;
         saveChecklistItems();
@@ -3998,12 +4301,12 @@
     });
 
     bindUiLongPress(tripHeaderEl, {
-      onLongPress: () => openEditTravelInfoModal(uiState.currentTravelId)
+      onLongPress: () => enterEditTravelInfo(uiState.currentTravelId)
     });
     tripHeaderEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        openEditTravelInfoModal(uiState.currentTravelId);
+        enterEditTravelInfo(uiState.currentTravelId);
       }
     });
     bindUiLongPress(membersSectionTitleEl, {
@@ -4303,24 +4606,26 @@
         syncTravelToGlobals(travel);
         closeTravelSettingsModal();
         closeTravelCoverModal();
-        closeEditTravelInfoModal();
+        hideEditTravelInfoPage();
+        hideAddItemPage();
         leaveMemberManage();
         homePage.hidden = true;
         travelPage.hidden = false;
         memberManagePage.hidden = true;
+        editTravelInfoPage.hidden = true;
+        addItemPage.hidden = true;
         addButton.hidden = false;
         renderTripTitle();
         renderMembersSectionTitle();
         renderMemberList();
         renderCategoryCards();
         syncCategorySelect();
-        renderOwnerOptions();
         renderChecklistItems();
         document.title = isTripTitleUnset() ? '旅行清单' : tripTitle.trim();
         return;
       }
 
-      if ((uiState.page === 'travel' || uiState.page === 'members') && uiState.currentTravelId) {
+      if ((uiState.page === 'travel' || uiState.page === 'members' || uiState.page === 'editInfo' || uiState.page === 'addItem') && uiState.currentTravelId) {
         syncGlobalsToCurrentTravel();
         saveTravels();
       }
@@ -4330,9 +4635,12 @@
       memberStripReorder.forceReset();
       closeTravelSettingsModal();
       closeTravelCoverModal();
-      closeEditTravelInfoModal();
+      hideEditTravelInfoPage();
+      hideAddItemPage();
       leaveMemberManage();
       memberManagePage.hidden = true;
+      editTravelInfoPage.hidden = true;
+      addItemPage.hidden = true;
       homePage.hidden = false;
       travelPage.hidden = true;
       addButton.hidden = true;
@@ -4366,28 +4674,45 @@
       renderTripTitle();
     }
 
-    function openEditTravelInfoModal(travelId = uiState.currentTravelId) {
+    function hideEditTravelInfoPage() {
+      editingTravelInfoId = null;
+      if (editTravelInfoPage) delete editTravelInfoPage.dataset.editingTravelId;
+      editTravelInfoPage.hidden = true;
+    }
+
+    function enterEditTravelInfo(travelId = uiState.currentTravelId) {
       const travel = getTravelById(travelId);
       if (!travel) {
         console.error('[travel-info] open failed: travel not found', travelId);
         return;
       }
+      closeTravelSettingsModal();
       editingTravelInfoId = travel.id;
-      editTravelInfoModal.dataset.editingTravelId = travel.id;
+      editTravelInfoPage.dataset.editingTravelId = travel.id;
       editTravelInfoNameInput.value = String(travel.name || '').trim();
       editTravelInfoStartDateInput.value = travel.startDate || '';
       editTravelInfoEndDateInput.value = travel.endDate || '';
       editTravelInfoStartDatePicker.value = travel.startDate || '';
       editTravelInfoEndDatePicker.value = travel.endDate || '';
-      editTravelInfoModal.classList.add('show');
+      hideAddItemPage();
+      travelPage.hidden = true;
+      memberManagePage.hidden = true;
+      editTravelInfoPage.hidden = false;
+      addButton.hidden = true;
+      uiState.page = 'editInfo';
+      document.title = '编辑旅行信息';
       editTravelInfoNameInput.focus();
       editTravelInfoNameInput.select();
     }
 
-    function closeEditTravelInfoModal() {
-      editingTravelInfoId = null;
-      delete editTravelInfoModal.dataset.editingTravelId;
-      editTravelInfoModal.classList.remove('show');
+    function leaveEditTravelInfo() {
+      hideEditTravelInfoPage();
+      if (uiState.page === 'editInfo') {
+        uiState.page = 'travel';
+        travelPage.hidden = false;
+        addButton.hidden = false;
+        document.title = isTripTitleUnset() ? '旅行清单' : tripTitle.trim();
+      }
     }
 
     function handleSaveTravelInfo(event) {
@@ -4397,7 +4722,7 @@
         event.stopPropagation();
       }
 
-      const travelId = editingTravelInfoId || editTravelInfoModal.dataset.editingTravelId || null;
+      const travelId = editingTravelInfoId || editTravelInfoPage.dataset.editingTravelId || null;
       if (!travelId) {
         console.error('[travel-info] save failed: missing travel id');
         return;
@@ -4429,7 +4754,7 @@
         if (uiState.currentTravelId === travel.id) {
           renderCurrentTravel();
         }
-        closeEditTravelInfoModal();
+        leaveEditTravelInfo();
       } catch (err) {
         console.error('[travel-info] save failed:', err);
       }
@@ -4514,7 +4839,7 @@
             saveMembers();
             saveChecklistItems();
             renderMemberList();
-            renderOwnerOptions();
+            refreshAddItemOwnerRadiosIfNeeded();
             renderChecklistItems();
             renderHomePage();
           }
@@ -4560,9 +4885,12 @@
     function enterMemberManage() {
       if (!uiState.currentTravelId) return;
       closeTravelSettingsModal();
+      hideAddItemPage();
       memberStripReorder.forceReset();
       travelPage.hidden = true;
       memberManagePage.hidden = false;
+      addItemPage.hidden = true;
+      editTravelInfoPage.hidden = true;
       addButton.hidden = true;
       uiState.page = 'members';
       renderMemberManagePage();
@@ -5097,7 +5425,7 @@
     travelSettingsEditInfoBtn.addEventListener('click', () => {
       const travelId = uiState.currentTravelId;
       closeTravelSettingsModal();
-      if (travelId) openEditTravelInfoModal(travelId);
+      if (travelId) enterEditTravelInfo(travelId);
     });
     travelSettingsMembersBtn.addEventListener('click', () => {
       closeTravelSettingsModal();
@@ -5116,10 +5444,11 @@
     travelCoverSystemBtn.addEventListener('click', closeTravelCoverModal);
     travelCoverUploadBtn.addEventListener('click', closeTravelCoverModal);
 
+    backFromEditTravelInfoBtn.addEventListener('click', leaveEditTravelInfo);
     cancelEditTravelInfoBtn.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      closeEditTravelInfoModal();
+      leaveEditTravelInfo();
     });
     editTravelInfoNameInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') handleSaveTravelInfo(event);
@@ -5134,10 +5463,6 @@
       editTravelInfoEndDateInput,
       editTravelInfoEndDatePicker
     );
-    editTravelInfoModal.addEventListener('click', (event) => {
-      if (event.target === editTravelInfoModal) closeEditTravelInfoModal();
-    });
-
     loadTravels();
     addButton.hidden = true;
     renderHomePage();
