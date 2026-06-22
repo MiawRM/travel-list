@@ -4748,7 +4748,8 @@
         categories: [...categories],
         items: checklistItems.map(item => ({ ...item })),
         collapsedCategories: { ...collapsedCategories },
-        order: 0
+        order: 0,
+        coverImage: pickDefaultCoverForIndex(0)
       });
       travels = [travel];
       saveTravels();
@@ -4869,7 +4870,8 @@
     }
 
     function createNewTravel() {
-      const travel = createDefaultTravelData({ order: travels.length });
+      const index = travels.length;
+      const travel = createDefaultTravelData({ order: index, coverImage: pickDefaultCoverForIndex(index) });
       travels.push(travel);
       saveTravels();
       renderHomePage();
@@ -5222,6 +5224,8 @@
 
 
     const TRAVEL_COVERS = [
+      { id: 'bluelake', name: '蓝湖热气球', image: 'assets/defaults/travel-blue-lake.jpg', gradient: 'linear-gradient(145deg, #C5DAE0 0%, #97BAC3 55%, #6F96A1 100%)' },
+      { id: 'santorini', name: '圣托里尼', image: 'assets/defaults/travel-pink-santorini.jpg', gradient: 'linear-gradient(145deg, #F3DCDC 0%, #E2B6BC 55%, #C99AA0 100%)' },
       { id: 'seaside', name: '海边', image: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&h=675&q=72&sat=-42&vib=-15&con=-8&bri=8', gradient: 'linear-gradient(145deg, #BFD6DD 0%, #93B4C0 55%, #6E94A2 100%)' },
       { id: 'sakura', name: '樱花', image: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&h=675&q=72&sat=-42&vib=-15&con=-8&bri=8', gradient: 'linear-gradient(145deg, #EBD6DA 0%, #D6B3BB 55%, #B98E99 100%)' },
       { id: 'forest', name: '森林', image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&h=675&q=72&sat=-42&vib=-15&con=-8&bri=8', gradient: 'linear-gradient(145deg, #CBD3C2 0%, #A6B49A 55%, #7E9078 100%)' },
@@ -5240,6 +5244,12 @@
 
     function pickRandomTravelCoverId() {
       return TRAVEL_COVERS[Math.floor(Math.random() * TRAVEL_COVERS.length)].id;
+    }
+
+    function pickDefaultCoverForIndex(index) {
+      if (index === 0) return 'bluelake';
+      if (index === 1) return 'santorini';
+      return pickRandomTravelCoverId();
     }
 
     function getTravelCoverGradient(travel) {
